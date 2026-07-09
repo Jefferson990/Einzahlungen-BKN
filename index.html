@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>o2 Rechnung einzahlen &ndash; HeTec</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root{
+    --o2-blue:#0019A5; --o2-blue-dark:#000A57;
+    --o2-mag:#E4007E; --o2-mag-dark:#B3005F;
+    --ink:#1b1b2f; --grey:#6b6b7d; --line:#e3e3ee; --bg:#f4f5fb;
+    --ok:#0a8a3d; --ok-bg:#e6f6ec; --warn:#b3005f; --card:#fff; --radius:16px;
+    --amber:#b8860b; --amber-bg:#fff7e6;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);color:var(--ink);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:920px;margin:0 auto;padding:0 16px 60px}
+
+  header{background:linear-gradient(135deg,var(--o2-blue) 0%,var(--o2-blue-dark) 100%);color:#fff;
+    padding:18px 16px;position:sticky;top:0;z-index:50;box-shadow:0 4px 18px rgba(0,25,165,.18)}
+  .header-inner{max-width:920px;margin:0 auto;display:flex;align-items:center;gap:14px}
+  .logo{width:46px;height:46px;border-radius:12px;background:#fff;color:var(--o2-blue);
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;flex-shrink:0}
+  .htitle{font-size:19px;font-weight:700;line-height:1.1}
+  .hsub{font-size:12.5px;opacity:.82;font-weight:500}
+
+  .tabs{display:flex;gap:8px;margin:18px 0 22px;background:#e7e9f6;padding:6px;border-radius:14px}
+  .tab{flex:1;text-align:center;padding:12px 8px;border-radius:10px;font-weight:700;font-size:14.5px;
+    cursor:pointer;color:var(--o2-blue);border:none;background:transparent;transition:.15s;position:relative}
+  .tab.active{background:#fff;box-shadow:0 2px 8px rgba(0,25,165,.12)}
+  .tab .sub{display:block;font-size:11px;font-weight:500;opacity:.7;margin-top:2px}
+  .tab-badge{position:absolute;top:6px;right:10px;min-width:22px;height:22px;padding:0 6px;
+    background:var(--o2-mag);color:#fff;border-radius:11px;font-size:12px;font-weight:800;
+    display:none;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(228,0,126,.4);animation:pulse 1.8s infinite}
+  .tab-badge.show{display:flex}
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+
+  .alert{display:none;border-radius:14px;padding:16px 18px;margin-bottom:18px;
+    align-items:center;gap:14px;cursor:pointer;transition:.15s;color:#fff}
+  .alert.show{display:flex}
+  .alert:hover{filter:brightness(1.06)}
+  .alert.mag{background:linear-gradient(135deg,#e4007e,#b3005f);box-shadow:0 4px 16px rgba(228,0,126,.28)}
+  .alert.blue{background:linear-gradient(135deg,#0019A5,#000A57);box-shadow:0 4px 16px rgba(0,25,165,.28)}
+  .alert .ico{font-size:26px;line-height:1}
+  .alert .txt{flex:1}
+  .alert .txt b{font-size:16px}
+  .alert .txt span{display:block;font-size:12.5px;opacity:.9;font-weight:500}
+  .alert .go{background:rgba(255,255,255,.22);padding:9px 14px;border-radius:10px;font-weight:700;font-size:13px;white-space:nowrap}
+
+  .card{background:var(--card);border-radius:var(--radius);padding:22px;
+    box-shadow:0 2px 14px rgba(20,20,60,.05);border:1px solid var(--line);margin-bottom:18px}
+  .card h2{margin:0 0 4px;font-size:20px}
+  .card .lead{color:var(--grey);font-size:14px;margin:0 0 20px}
+
+  label{display:block;font-weight:600;font-size:13.5px;margin:0 0 6px;color:var(--ink)}
+  .req{color:var(--o2-mag)}
+  input,select{width:100%;padding:14px;font-size:16px;border:1.5px solid var(--line);
+    border-radius:12px;background:#fbfbfe;color:var(--ink);transition:.15s;font-family:inherit}
+  input:focus,select:focus{outline:none;border-color:var(--o2-blue);background:#fff;box-shadow:0 0 0 3px rgba(0,25,165,.1)}
+  input:disabled{background:#eef0f4;color:var(--grey);cursor:not-allowed}
+  .field{margin-bottom:16px}
+  .row{display:flex;gap:14px}
+  .row .field{flex:1}
+  @media(max-width:560px){.row{flex-direction:column;gap:0}}
+
+  .btn{width:100%;padding:16px;border:none;border-radius:12px;font-size:16px;font-weight:700;
+    cursor:pointer;transition:.15s;font-family:inherit}
+  .btn-primary{background:var(--o2-mag);color:#fff}
+  .btn-primary:hover{background:var(--o2-mag-dark)}
+  .btn-primary:disabled{background:#c9c9d8;cursor:not-allowed}
+  .btn-blue{background:var(--o2-blue);color:#fff}
+  .btn-blue:hover{background:var(--o2-blue-dark)}
+  .btn-ghost{background:#eef0fa;color:var(--o2-blue);margin-top:10px}
+  .btn-ghost:hover{background:#e2e5f7}
+  .btn-danger{background:#fdeaf4;color:var(--o2-mag)}
+  .btn-danger:hover{background:#f9d3e7}
+
+  .hint{font-size:12.5px;color:var(--grey);margin-top:8px}
+  .err{color:var(--o2-mag);font-size:13px;margin-top:8px;font-weight:600;display:none}
+
+  .pos{border:1.5px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;background:#fbfbfe;position:relative}
+  .pos-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  .pos-num{font-weight:800;font-size:14px;color:var(--o2-blue);display:flex;align-items:center;gap:8px}
+  .pos-badge{background:var(--o2-blue);color:#fff;width:24px;height:24px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;font-size:13px}
+  .pos-del{background:#fdeaf4;color:var(--o2-mag);border:none;border-radius:9px;padding:7px 12px;
+    font-weight:700;font-size:12.5px;cursor:pointer;font-family:inherit}
+  .pos-del:hover{background:#f9d3e7}
+  .amount-wrap{position:relative}
+  .amount-wrap input{padding-left:34px;font-weight:700;color:var(--o2-blue)}
+  .amount-wrap .eur{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--grey)}
+  .btn-add{background:#eef0fa;color:var(--o2-blue);border:1.5px dashed var(--o2-blue);
+    padding:13px;border-radius:12px;font-weight:700;font-size:14.5px;cursor:pointer;width:100%;font-family:inherit;margin-bottom:6px}
+  .btn-add:hover{background:#e2e5f7}
+  .btn-add:disabled{opacity:.45;cursor:not-allowed;border-style:solid}
+
+  .summary{background:#f0f2fd;border-radius:12px;padding:16px 18px;margin:18px 0}
+  .sline{display:flex;justify-content:space-between;font-size:14px;padding:4px 0;color:var(--grey)}
+  .sline .v{color:var(--ink);font-weight:600}
+  .stotal{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:12px;border-top:2px solid #d3d7ef}
+  .stotal .k{font-weight:700;font-size:15px}
+  .stotal .v{font-size:24px;font-weight:800;color:var(--o2-blue)}
+
+  .status{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;
+    padding:5px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.3px}
+  .status.bn{background:#fdeaf4;color:var(--warn)}
+  .status.transit{background:var(--amber-bg);color:var(--amber)}
+  .status.sha{background:var(--ok-bg);color:var(--ok)}
+  .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+
+  /* ===== o2 A4-Rechnung ===== */
+  .inv{max-width:794px;margin:0 auto;background:#fff;color:#000;padding:38px 44px 28px;
+    font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.35}
+  .inv-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+  .inv-title{font-size:30px;color:#555;font-weight:400;letter-spacing:.5px}
+  .inv-shopname{font-weight:700;font-size:20px;color:#000;line-height:1.2;text-align:right}
+  .inv-meta{margin:26px 0 6px;display:flex;justify-content:flex-end}
+  .inv-meta table{border-collapse:collapse;font-size:12px}
+  .inv-meta td{padding:1px 0}
+  .inv-meta td.lbl{color:#000;padding-right:38px}
+  .inv-seite{display:flex;justify-content:flex-end;align-items:center;gap:14px;margin:18px 0 6px}
+  .inv-seite .s-lbl{color:#555}
+  .inv-barcode{font-family:'Libre Barcode 39',monospace;font-size:11px;letter-spacing:0;text-align:right}
+  .inv-barcode .bars{font-family:monospace;font-size:26px;line-height:.8;letter-spacing:-2px;overflow:hidden;white-space:nowrap;max-width:340px;display:block}
+  .inv-barcode .bcnum{font-size:11px;color:#000;text-align:center;letter-spacing:2px}
+  table.pos{width:100%;border-collapse:collapse;margin-top:4px}
+  table.pos th{border-bottom:1.5px solid #000;font-size:11px;text-align:left;padding:6px 6px;font-weight:700;vertical-align:bottom}
+  table.pos th.r,table.pos td.r{text-align:right}
+  table.pos th.c,table.pos td.c{text-align:center}
+  table.pos td{padding:5px 6px;vertical-align:top;font-size:12px}
+  table.pos tr.main td{font-weight:700;padding-top:9px}
+  .sub-lines{font-size:11px;font-weight:400;color:#000;line-height:1.5;padding-top:2px}
+  .sub-lines .sl{display:flex;gap:8px}
+  .sub-lines .sl .a{display:inline-block;min-width:118px;color:#000}
+  tr.rowline td{border-bottom:1px solid #000}
+  .sum-wrap{display:flex;justify-content:space-between;margin-top:18px;gap:20px}
+  .sum-left{font-size:12px}
+  .sum-left .sh{font-weight:700;margin-bottom:3px}
+  .sum-mid{font-size:12px;text-align:left}
+  .sum-mid .sh{font-weight:700;margin-bottom:3px}
+  .sum-right{font-size:12px;text-align:right;min-width:150px}
+  .sum-right .sh{font-weight:700;margin-bottom:3px}
+  .sum-row{display:flex;justify-content:space-between;gap:30px;padding:1px 0}
+  .zahl{display:flex;justify-content:space-between;border-top:2px solid #000;border-bottom:2px solid #000;
+    padding:6px 0;margin-top:12px;font-weight:700;font-size:13px}
+  .gegeben{display:flex;justify-content:space-between;padding:6px 0;font-size:12px}
+  .gegeben .lbl{color:#000}
+  .tse{margin-top:34px;font-size:9.5px;color:#000;line-height:1.5}
+  .tse b{font-size:11px}
+  .tse .star{margin-top:10px}
+  .inv-footer{margin-top:60px;text-align:center;font-size:9.5px;color:#000;line-height:1.5}
+  .inv-footer .sep{border-top:1px solid #000;margin:8px 0}
+  .qr-wrap{float:right;margin-top:-40px;text-align:center}
+  .qr-box{width:80px;height:80px;display:flex;align-items:center;justify-content:center;margin:0 auto}
+  .qr-box img,.qr-box canvas{width:80px!important;height:80px!important}
+  .qr-cap{font-size:8px;color:#000;margin-top:3px;max-width:96px;line-height:1.25}
+  .inv-toggle{display:flex;gap:8px;padding:16px 24px 0;justify-content:center}
+  .inv-note{text-align:center;font-size:11px;color:var(--grey);padding:6px 24px 0}
+
+  .toolbar{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+  .toolbar input{flex:1;min-width:160px}
+  .filter{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{padding:9px 14px;border-radius:20px;border:1.5px solid var(--line);background:#fff;
+    font-weight:600;font-size:13px;cursor:pointer;color:var(--grey);font-family:inherit}
+  .chip.active{background:var(--o2-blue);color:#fff;border-color:var(--o2-blue)}
+
+  .txn{border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px;background:#fff}
+  .txn.sha{background:#fafcfb;opacity:.78}
+  .txn-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px}
+  .txn-name{font-size:17px;font-weight:700}
+  .txn-meta{font-size:12.5px;color:var(--grey);margin-top:1px}
+  .txn-poslist{margin:10px 0;border-top:1px solid var(--line);padding-top:10px}
+  .txn-posrow{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:5px 0}
+  .txn-posrow .pk{font-weight:600}
+  .txn-posrow .psub{color:var(--grey);font-size:11.5px}
+  .txn-posrow .pv{font-weight:700;color:var(--o2-blue);white-space:nowrap}
+  .txn-amt{font-size:22px;font-weight:800;color:var(--o2-blue)}
+  .txn-actions{display:flex;gap:8px;margin-top:12px}
+  .txn-actions .btn{padding:11px;font-size:14px;flex:1}
+  .btn-mini{background:#eef0fa;color:var(--o2-blue);flex:0 0 auto;padding:11px 16px}
+
+  .empty{text-align:center;padding:44px 20px;color:var(--grey)}
+  .empty .ico{font-size:40px;margin-bottom:8px}
+  .banner{padding:14px 16px;border-radius:12px;font-size:13.5px;font-weight:600;margin-bottom:16px;display:flex;gap:10px;align-items:flex-start}
+  .banner.info{background:#e9edff;color:var(--o2-blue-dark)}
+  .banner.warn{background:#fff4e5;color:#8a5a00}
+
+  .stats{display:flex;gap:12px;margin-bottom:16px}
+  .stat{flex:1;background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .stat .n{font-size:22px;font-weight:800;color:var(--o2-blue)}
+  .stat.mag .n{color:var(--o2-mag)}
+  .stat.amber .n{color:var(--amber)}
+  .stat.green .n{color:var(--ok)}
+  .stat .l{font-size:12px;color:var(--grey);font-weight:600}
+
+  /* Admin bar */
+  .admin-bar{background:#1b1b2f;color:#fff;border-radius:14px;padding:14px 16px;margin-bottom:16px}
+  .admin-locked,.admin-unlocked{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:13px;font-weight:600}
+  .admin-actions{display:flex;gap:8px;flex-wrap:wrap}
+  .btn-admin{background:#fff;color:#1b1b2f;border:none;border-radius:9px;padding:9px 14px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit}
+  .btn-admin.ghost{background:rgba(255,255,255,.15);color:#fff}
+  .btn-admin.ghost:hover{background:rgba(255,255,255,.25)}
+
+  /* Kassenbestand */
+  .kb-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:6px 0 4px}
+  @media(max-width:560px){.kb-grid{grid-template-columns:1fr}}
+  .kb-cell{background:#fbfbfe;border:1.5px solid var(--line);border-radius:12px;padding:13px 14px}
+  .kb-cell label{font-size:11.5px;text-transform:uppercase;letter-spacing:.3px;color:var(--grey);margin-bottom:6px}
+  .kb-cell .big{font-size:22px;font-weight:800;color:var(--o2-blue)}
+  .kb-cell input{padding:10px 12px;font-size:18px;font-weight:700;color:var(--o2-blue)}
+  .kb-diff{margin-top:12px;border-radius:12px;padding:14px 16px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+  .kb-diff.ok{background:var(--ok-bg);color:var(--ok)}
+  .kb-diff.bad{background:#fdeaf4;color:var(--o2-mag)}
+  .kb-diff .d{font-size:22px;font-weight:800}
+  .kb-note{font-size:12px;color:var(--grey);margin-top:8px}
+  .moves-list{margin-top:12px}
+
+  /* Bestandskunden-Abfrage */
+  .bk-block{border:2px solid var(--o2-blue);border-radius:14px;padding:16px;margin-bottom:18px;background:#f7f8ff}
+  .bk-block.answered{border-color:var(--line);background:#fbfbfe}
+  .bk-q{font-weight:700;font-size:14.5px;margin-bottom:12px}
+  .bk-q .req{color:var(--o2-mag)}
+  .bk-opts{display:flex;gap:10px}
+  .bk-opt{flex:1;padding:14px;border-radius:12px;border:1.5px solid var(--line);background:#fff;
+    font-weight:700;font-size:15px;cursor:pointer;color:var(--ink);font-family:inherit;transition:.15s}
+  .bk-opt:hover{border-color:var(--o2-blue)}
+  .bk-opt.sel-ja{background:var(--ok);color:#fff;border-color:var(--ok)}
+  .bk-opt.sel-nein{background:var(--o2-mag);color:#fff;border-color:var(--o2-mag)}
+  .bk-warn{display:none;margin-top:12px;background:var(--amber-bg);color:#8a5a00;border-radius:10px;
+    padding:12px 14px;font-size:13px;font-weight:600;gap:8px;align-items:flex-start;border:1.5px solid var(--amber)}
+  .bk-warn.show{display:flex;animation:shake 0.6s ease-in-out infinite}
+  @keyframes shake{
+    0%,100%{transform:translateX(0)}
+    15%{transform:translateX(-6px) rotate(-1deg)}
+    30%{transform:translateX(6px) rotate(1deg)}
+    45%{transform:translateX(-5px) rotate(-1deg)}
+    60%{transform:translateX(5px) rotate(1deg)}
+    75%{transform:translateX(-3px)}
+  }
+  /* Pflicht-Checkbox Vertragsinhaber */
+  .confirm-box{display:flex;gap:12px;align-items:flex-start;border:2px solid var(--o2-blue);
+    border-radius:12px;padding:14px 16px;margin:6px 0 16px;background:#f7f8ff;cursor:pointer;transition:.15s}
+  .confirm-box.checked{border-color:var(--ok);background:var(--ok-bg)}
+  .confirm-box.miss{border-color:var(--o2-mag);animation:shake 0.6s ease-in-out infinite}
+  .confirm-box input{width:22px;height:22px;flex-shrink:0;margin-top:1px;accent-color:var(--ok);cursor:pointer}
+  .confirm-box label{margin:0;font-size:13.5px;font-weight:600;cursor:pointer;line-height:1.4}
+  .flag-warn{display:inline-block;color:var(--amber);font-weight:800;animation:shake 0.6s ease-in-out infinite}
+  @media(prefers-reduced-motion:reduce){
+    .bk-warn.show,.flag-warn,.confirm-box.miss{animation:none}
+    .bk-warn.show{border-width:2px}
+  }
+  .move-row{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:7px}
+  .move-row .mk{font-weight:600}
+  .move-row .msub{font-size:11.5px;color:var(--grey)}
+  .move-row .mv{font-weight:800;white-space:nowrap}
+  .move-row .mv.plus{color:var(--ok)}
+  .move-row .mv.minus{color:var(--o2-mag)}
+  .move-del{background:none;border:none;color:var(--grey);cursor:pointer;font-size:16px;padding:2px 6px}
+
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(120px);
+    background:var(--ink);color:#fff;padding:14px 22px;border-radius:12px;font-weight:600;font-size:14px;
+    box-shadow:0 8px 30px rgba(0,0,0,.3);z-index:200;transition:transform .3s;max-width:90vw;text-align:center}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+  .toast.ok{background:var(--ok)}
+  .toast.bad{background:var(--o2-mag)}
+  .modal-bg{position:fixed;inset:0;background:rgba(15,15,40,.55);display:none;align-items:center;justify-content:center;z-index:150;padding:16px}
+  .modal-bg.show{display:flex}
+  .modal{background:#fff;border-radius:18px;max-width:480px;width:100%;max-height:92vh;overflow:auto}
+  .modal.invoice{max-width:850px}
+  .modal-pad{padding:24px}
+  .modal-pad h2{margin:0 0 6px;font-size:20px}
+  .modal-actions{display:flex;gap:10px;padding:0 24px 24px}
+  .check-box{background:#f0f2fd;border-radius:12px;padding:14px 16px;margin:14px 0;text-align:center}
+  .check-box .cbig{font-size:26px;font-weight:800;color:var(--o2-blue)}
+  .check-box .clabel{font-size:12.5px;color:var(--grey);font-weight:600}
+
+  @media print{
+    /* Alles ausblenden ... */
+    body > *{display:none!important}
+    /* ... außer dem Beleg-Modal */
+    body > #receipt-modal{display:block!important}
+    #receipt-modal{position:static!important;background:none!important;padding:0!important;inset:auto!important}
+    #receipt-modal .modal-actions,#receipt-modal .no-print{display:none!important}
+    .modal.invoice{max-width:100%!important;border-radius:0;box-shadow:none;max-height:none;overflow:visible}
+    body{background:#fff}
+    .inv{padding:0;font-size:11px}
+    @page{size:A4;margin:12mm}
+    .inv-title{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">HT</div>
+    <div>
+      <div class="htitle">Rechnung einzahlen</div>
+      <div class="hsub">HeTec &middot; Barzahlungs-Verbund Backnang &harr; Schw&auml;bisch Hall</div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="tabs no-print">
+    <button class="tab active" id="tab-erfassen" onclick="switchTab('erfassen')">
+      Zahlung erfassen<span class="sub">Shop Backnang</span>
+    </button>
+    <button class="tab" id="tab-transfer" onclick="switchTab('transfer')">
+      Transfer<span class="sub">Backnang &rarr; SHA</span>
+      <span class="tab-badge" id="badge-transfer">0</span>
+    </button>
+    <button class="tab" id="tab-kasse" onclick="switchTab('kasse')">
+      Kasse<span class="sub">Schw&auml;bisch Hall</span>
+      <span class="tab-badge" id="badge-kasse">0</span>
+    </button>
+  </div>
+
+  <!-- ============ ERFASSEN ============ -->
+  <div id="view-erfassen">
+    <div class="alert mag" id="alert-bn" onclick="switchTab('transfer')">
+      <span class="ico">&#128181;</span>
+      <div class="txt"><b id="alert-bn-text">Geld wartet in Backnang</b><span id="alert-bn-sub"></span></div>
+      <span class="go">Zum Transfer &rarr;</span>
+    </div>
+    <div class="card">
+      <h2>Barzahlung erfassen</h2>
+      <p class="lead">Kunde zahlt eine oder mehrere o2-Rechnungen bar. Pro Beleg 3&nbsp;&euro; Bearbeitungsgeb&uuml;hr. Bis zu 10 Einzahlungen pro Beleg m&ouml;glich.</p>
+      <div class="banner info">
+        <span>&#9432;</span>
+        <span>Bei mehreren Einzahlungen bitte die jeweilige Kundennummer eintragen (Handyvertrag, My Handy und DSL haben unterschiedliche Kundennummern).</span>
+      </div>
+
+      <div class="bk-block" id="bk-block">
+        <div class="bk-q">Ist der Kunde im System hinterlegt? (Bestandskundenerfassung) <span class="req">*</span></div>
+        <div class="bk-opts">
+          <button type="button" class="bk-opt" id="bk-ja" onclick="setBestandskunde('ja')">Ja</button>
+          <button type="button" class="bk-opt" id="bk-nein" onclick="setBestandskunde('nein')">Nein</button>
+        </div>
+        <div class="bk-warn" id="bk-warn">
+          <span>&#9888;</span>
+          <span>Kunde ist <b>nicht</b> im System hinterlegt. Bitte Bestandskundenerfassung nachholen. Die Zahlung kann trotzdem verbucht werden &ndash; dieser Hinweis ist nur intern und erscheint <b>nicht</b> auf dem Kundenbeleg.</span>
+        </div>
+      </div>
+      <div class="banner warn" style="margin-top:4px">
+        <span>&#9888;</span>
+        <span>Die folgenden Daten m&uuml;ssen <b>zwingend die des Vertragsinhabers</b> sein &ndash; nicht von einer Begleitperson oder der zahlenden Person.</span>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Nachname (Vertragsinhaber) <span class="req">*</span></label>
+          <input id="f-name" type="text" placeholder="z. B. M&uuml;ller" autocomplete="off">
+        </div>
+        <div class="field">
+          <label>Geburtsdatum (Vertragsinhaber) <span class="req">*</span></label>
+          <input id="f-dob" type="date">
+        </div>
+      </div>
+      <div class="field">
+        <label>Rufnummer (Vertragsinhaber) <span class="req">*</span></label>
+        <input id="f-phone" type="tel" inputmode="tel" placeholder="z. B. 0176 12345678" autocomplete="off">
+      </div>
+      <label style="margin-top:6px">Einzahlungen <span class="req">*</span></label>
+      <div id="pos-container"></div>
+      <button class="btn-add" id="btn-add" onclick="addPosition()">+ Weitere Einzahlung hinzuf&uuml;gen</button>
+      <div class="hint" id="pos-count">1 von max. 10 Einzahlungen</div>
+      <div class="summary" id="summary"></div>
+      <div class="field" style="margin-top:4px">
+        <label>Kassierer/in Backnang</label>
+        <input id="f-agent" type="text" placeholder="Name Mitarbeiter" autocomplete="off">
+      </div>
+      <div class="confirm-box" id="confirm-box" onclick="toggleOwner()">
+        <input type="checkbox" id="f-owner" onclick="event.stopPropagation()" onchange="syncOwner()">
+        <label style="margin:0;font-size:13.5px;font-weight:600;cursor:pointer;line-height:1.4">Ich best&auml;tige, dass die erfassten Daten (Name, Geburtsdatum, Rufnummer) die des <b>Vertragsinhabers</b> sind. <span class="req">*</span></label>
+      </div>
+      <div class="err" id="f-err"></div>
+      <button class="btn btn-primary" onclick="submitPayment()">Zahlung verbuchen &amp; Beleg erstellen</button>
+    </div>
+  </div>
+
+  <!-- ============ TRANSFER (Backnang) ============ -->
+  <div id="view-transfer" style="display:none">
+    <div class="stats">
+      <div class="stat mag"><div class="n" id="t-open-sum">0,00 &euro;</div><div class="l">Offen in Backnang</div></div>
+      <div class="stat amber"><div class="n" id="t-transit-sum">0,00 &euro;</div><div class="l">Unterwegs zur SHA</div></div>
+      <div class="stat"><div class="n" id="t-open-count">0</div><div class="l">Belege in Backnang</div></div>
+    </div>
+
+    <div class="card">
+      <h2 style="font-size:18px">Geldtransfer nach Schw&auml;bisch Hall</h2>
+      <p class="lead">Alle offenen Bareinnahmen aus Backnang (Rechnungen + Bearbeitungsgeb&uuml;hren) werden zusammen transferiert. Betrag z&auml;hlen und zur Kontrolle eingeben.</p>
+      <div class="check-box">
+        <div class="clabel">OFFEN IN BACKNANG (SOLL-TRANSFER)</div>
+        <div class="cbig" id="t-soll">0,00 &euro;</div>
+        <div class="kb-note" id="t-soll-detail"></div>
+      </div>
+      <div class="field">
+        <label>Gez&auml;hlter Betrag zur Kontrolle <span class="req">*</span></label>
+        <div class="amount-wrap"><span class="eur">&euro;</span>
+          <input id="t-count" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0,00"></div>
+        <div class="hint">Muss exakt mit dem Soll-Transfer &uuml;bereinstimmen.</div>
+      </div>
+      <div class="err" id="t-err"></div>
+      <button class="btn btn-blue" id="t-start-btn" onclick="startTransfer(false)">Geldtransfer starten</button>
+      <button class="btn btn-ghost" onclick="startTransfer(true)">Abweichenden Betrag freigeben (Admin)</button>
+    </div>
+
+    <div id="transit-list"></div>
+  </div>
+
+  <!-- ============ KASSE (SHA) ============ -->
+  <div id="view-kasse" style="display:none">
+    <div class="alert blue" id="alert-incoming" onclick="scrollToIncoming()">
+      <span class="ico">&#128230;</span>
+      <div class="txt"><b id="alert-incoming-text">Geld unterwegs</b><span id="alert-incoming-sub"></span></div>
+      <span class="go">Ansehen &rarr;</span>
+    </div>
+
+    <div class="stats">
+      <div class="stat amber"><div class="n" id="k-transit">0,00 &euro;</div><div class="l">Unterwegs (erwartet)</div></div>
+      <div class="stat green"><div class="n" id="k-soll">0,00 &euro;</div><div class="l">Soll-Bestand Kasse</div></div>
+      <div class="stat"><div class="n" id="k-diff">&ndash;</div><div class="l">Differenz Ist/Soll</div></div>
+    </div>
+
+    <div class="admin-bar" id="admin-bar">
+      <div class="admin-locked" id="admin-locked">
+        <span>&#128274; Admin: Kassenanfang, Beleg l&ouml;schen, Geld ein-/ausbuchen</span>
+        <button class="btn-admin" onclick="adminLogin()">Anmelden</button>
+      </div>
+      <div class="admin-unlocked" id="admin-unlocked" style="display:none">
+        <span>&#128275; Admin aktiv</span>
+        <div class="admin-actions">
+          <button class="btn-admin ghost" onclick="openCashModal('einlage')">+ Geld einzahlen</button>
+          <button class="btn-admin ghost" onclick="openCashModal('entnahme')">&minus; Geld ausbuchen</button>
+          <button class="btn-admin ghost" onclick="adminLogout()">Abmelden</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <h2 style="font-size:17px">Kassenbestand Schw&auml;bisch Hall</h2>
+      <p class="lead" style="margin-bottom:14px">Soll = Kassenanfang + angekommenes Geld + Einlagen &minus; Entnahmen.</p>
+      <div class="kb-grid">
+        <div class="kb-cell">
+          <label>Kassenanfang <span id="kb-lock" style="font-weight:500">&#128274;</span></label>
+          <div class="amount-wrap"><span class="eur">&euro;</span>
+            <input id="kb-start" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0,00" disabled oninput="renderKassenbestand()"></div>
+        </div>
+        <div class="kb-cell">
+          <label>+ Angekommen</label>
+          <div class="big" id="kb-income">0,00 &euro;</div>
+          <div class="kb-note" id="kb-income-count">0 Transfers</div>
+        </div>
+        <div class="kb-cell">
+          <label>&plusmn; Bewegungen</label>
+          <div class="big" id="kb-moves">0,00 &euro;</div>
+          <div class="kb-note" id="kb-moves-count">0 Bewegungen</div>
+        </div>
+      </div>
+      <div class="kb-grid" style="margin-top:12px;grid-template-columns:1fr 1fr">
+        <div class="kb-cell" style="background:#f0f2fd;border-color:#d3d7ef">
+          <label>= Soll-Bestand</label>
+          <div class="big" id="kb-soll">0,00 &euro;</div>
+        </div>
+        <div class="kb-cell">
+          <label>Ist-Bestand (gez&auml;hlt)</label>
+          <div class="amount-wrap"><span class="eur">&euro;</span>
+            <input id="kb-ist" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0,00" oninput="renderKassenbestand()"></div>
+        </div>
+      </div>
+      <div class="kb-diff ok" id="kb-diff"><span id="kb-diff-label">Differenz</span><span class="d" id="kb-diff-val">0,00 &euro;</span></div>
+      <div class="moves-list" id="kb-moves-list"></div>
+    </div>
+
+    <div class="banner warn">
+      <span>&#9888;</span>
+      <span>Zuerst Transfer in Backnang starten. Wenn das Bargeld physisch in SHA ankommt, hier z&auml;hlen und <b>&bdquo;Geld eingegangen&ldquo;</b> best&auml;tigen &ndash; nur bei exakter &Uuml;bereinstimmung.</span>
+    </div>
+    <div class="toolbar">
+      <input id="search" type="text" placeholder="Suche Name, Rufnummer oder Kundennummer&hellip;" oninput="renderKasse()">
+      <div class="filter">
+        <button class="chip active" id="chip-bn" onclick="setFilter('bn')">In Backnang</button>
+        <button class="chip" id="chip-transit" onclick="setFilter('transit')">Unterwegs</button>
+        <button class="chip" id="chip-sha" onclick="setFilter('sha')">In SHA</button>
+        <button class="chip" id="chip-all" onclick="setFilter('all')">Alle</button>
+      </div>
+    </div>
+    <div id="kasse-list"></div>
+  </div>
+</div>
+
+<!-- Receipt modal -->
+<div class="modal-bg" id="receipt-modal">
+  <div class="modal invoice">
+    <div id="receipt-content"></div>
+    <div class="modal-actions no-print" style="padding-top:18px">
+      <button class="btn btn-ghost" style="margin-top:0" onclick="closeModal('receipt-modal')">Schlie&szlig;en</button>
+      <button class="btn btn-primary" onclick="window.print()">Beleg drucken</button>
+    </div>
+  </div>
+</div>
+
+<!-- Incoming (SHA confirm) modal -->
+<div class="modal-bg" id="incoming-modal">
+  <div class="modal">
+    <div class="modal-pad">
+      <h2>Geld eingegangen best&auml;tigen</h2>
+      <p class="lead" style="margin-bottom:0">Transfer aus Backnang. Physisches Bargeld z&auml;hlen und Betrag zur Kontrolle eingeben.</p>
+      <div class="check-box">
+        <div class="clabel">ERWARTETER BETRAG</div>
+        <div class="cbig" id="in-expected">0,00 &euro;</div>
+        <div class="kb-note" id="in-detail"></div>
+      </div>
+      <div class="field">
+        <label>Gez&auml;hlter Betrag in SHA <span class="req">*</span></label>
+        <div class="amount-wrap"><span class="eur">&euro;</span>
+          <input id="in-count" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0,00"></div>
+      </div>
+      <div class="err" id="in-err"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" style="margin-top:0" onclick="closeModal('incoming-modal')">Abbrechen</button>
+      <button class="btn btn-blue" id="in-confirm-btn" onclick="confirmIncoming(false)">Geld eingegangen</button>
+    </div>
+    <div class="modal-actions" style="padding-top:0">
+      <button class="btn btn-ghost" style="margin-top:0;width:100%" onclick="confirmIncoming(true)">Abweichung freigeben (Admin)</button>
+    </div>
+  </div>
+</div>
+
+<!-- Cash movement modal -->
+<div class="modal-bg" id="cash-modal">
+  <div class="modal">
+    <div class="modal-pad">
+      <h2 id="cash-title">Geld einzahlen</h2>
+      <p class="lead" id="cash-lead">Einlage in die Kasse.</p>
+      <div class="field">
+        <label>Betrag <span class="req">*</span></label>
+        <div class="amount-wrap"><span class="eur">&euro;</span>
+          <input id="cash-amount" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0,00"></div>
+      </div>
+      <div class="field">
+        <label>Grund / Notiz <span class="req">*</span></label>
+        <input id="cash-note" type="text" placeholder="z. B. Wechselgeld, Fehlbetrag ausgleichen" autocomplete="off">
+      </div>
+      <div class="err" id="cash-err"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" style="margin-top:0" onclick="closeModal('cash-modal')">Abbrechen</button>
+      <button class="btn btn-primary" id="cash-confirm-btn" onclick="confirmCash()">Buchen</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===== FIREBASE ===== ersetze durch deine Config; sonst lokaler Demo-Modus ===== */
+const firebaseConfig = {
+  apiKey: "DEIN_API_KEY",
+  authDomain: "DEIN_PROJEKT.firebaseapp.com",
+  databaseURL: "https://DEIN_PROJEKT-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "DEIN_PROJEKT"
+};
+let db=null, useFirebase=false;
+try{
+  if(!firebaseConfig.databaseURL.includes("DEIN_PROJEKT")){
+    firebase.initializeApp(firebaseConfig); db=firebase.database(); useFirebase=true;
+  }
+}catch(e){ console.warn("Firebase init failed, Demo-Modus",e); }
+
+/* ===== KONFIG ===== */
+const ADMIN_PW = "hetec2026";   // <-- Admin-Passwort hier ändern
+const FEE = 3.00;
+const MAX_POS = 10;
+const TYPES = ["Handyvertrag","My Handy","DSL","Sonstiges"];
+
+/* ===== STATE ===== */
+/* payment.status: 'bn' (Geld in Backnang) | 'transit' (unterwegs) | 'sha' (angekommen) */
+let payments={};      // {id:{...}}
+let moves={};         // Kassenbewegungen {id:{type:'einlage'|'entnahme', amount, note, at}}
+let positions=[];
+let filter="bn", currentTab="erfassen", isAdmin=false;
+let bestandskunde=null;   // 'ja' | 'nein' | null
+
+function setBestandskunde(v){
+  bestandskunde=v;
+  document.getElementById('bk-ja').classList.toggle('sel-ja',v==='ja');
+  document.getElementById('bk-nein').classList.toggle('sel-nein',v==='nein');
+  document.getElementById('bk-warn').classList.toggle('show',v==='nein');
+  document.getElementById('bk-block').classList.toggle('answered',v!==null);
+  const err=document.getElementById('f-err'); if(err) err.style.display='none';
+}
+
+function toggleOwner(){
+  const cb=document.getElementById('f-owner');
+  cb.checked=!cb.checked;
+  syncOwner();
+}
+function syncOwner(){
+  const cb=document.getElementById('f-owner');
+  const box=document.getElementById('confirm-box');
+  box.classList.toggle('checked',cb.checked);
+  if(cb.checked) box.classList.remove('miss');
+  const err=document.getElementById('f-err'); if(err) err.style.display='none';
+}
+
+function euro(n){ return (Number(n)||0).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+" \u20AC"; }
+function round2(n){ return Math.round((Number(n)||0)*100)/100; }
+function fmtDate(iso){ if(!iso) return "\u2013"; return new Date(iso).toLocaleDateString('de-DE'); }
+function fmtDT(ts){ if(!ts) return "\u2013"; const d=new Date(ts); return d.toLocaleDateString('de-DE')+" "+d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}); }
+function toast(m,kind){ const t=document.getElementById('toast'); t.textContent=m; t.className='toast show'+(kind?' '+kind:''); setTimeout(()=>t.className='toast',3000); }
+function esc(s){ return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+
+function switchTab(t){
+  currentTab=t;
+  ['erfassen','transfer','kasse'].forEach(x=>{
+    document.getElementById('tab-'+x).classList.toggle('active',x===t);
+    document.getElementById('view-'+x).style.display = x===t?'block':'none';
+  });
+  if(t==='transfer') renderTransfer();
+  if(t==='kasse') renderKasse();
+  refreshAll();
+}
+
+/* ===== Positionen ===== */
+function addPosition(){ if(positions.length>=MAX_POS) return; positions.push({type:"Handyvertrag",kundennr:"",amount:""}); renderPositions(); }
+function removePosition(i){ positions.splice(i,1); if(!positions.length) positions.push({type:"Handyvertrag",kundennr:"",amount:""}); renderPositions(); }
+function updatePos(i,f,v){ positions[i][f]=v; if(f==='amount') renderSummary(); }
+function renderPositions(){
+  const multi=positions.length>1;
+  document.getElementById('pos-container').innerHTML=positions.map((p,i)=>`
+    <div class="pos">
+      <div class="pos-head">
+        <div class="pos-num"><span class="pos-badge">${i+1}</span> Einzahlung ${i+1}</div>
+        ${positions.length>1?`<button class="pos-del" onclick="removePosition(${i})">Entfernen</button>`:''}
+      </div>
+      <div class="row">
+        <div class="field" style="margin-bottom:12px">
+          <label>Art der Rechnung <span class="req">*</span></label>
+          <select onchange="updatePos(${i},'type',this.value)">
+            ${TYPES.map(t=>`<option ${p.type===t?'selected':''}>${t}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field" style="margin-bottom:12px">
+          <label>Kundennummer ${multi?'<span class="req">*</span>':'<span style="color:var(--grey);font-weight:500">(optional)</span>'}</label>
+          <input type="text" value="${esc(p.kundennr)}" placeholder="Kundennr." oninput="updatePos(${i},'kundennr',this.value)" autocomplete="off">
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label>Rechnungsbetrag <span class="req">*</span></label>
+        <div class="amount-wrap"><span class="eur">&euro;</span>
+          <input type="number" inputmode="decimal" step="0.01" min="0" value="${esc(p.amount)}" placeholder="0,00" oninput="updatePos(${i},'amount',this.value)"></div>
+      </div>
+    </div>`).join('');
+  document.getElementById('pos-count').textContent=`${positions.length} von max. ${MAX_POS} Einzahlungen`;
+  document.getElementById('btn-add').disabled=positions.length>=MAX_POS;
+  renderSummary();
+}
+function posSum(){ return positions.reduce((s,p)=>s+(parseFloat(p.amount)||0),0); }
+function renderSummary(){
+  const sum=posSum(), total=sum+FEE;
+  document.getElementById('summary').innerHTML=`
+    <div class="sline"><span>Rechnungen (${positions.length} ${positions.length===1?'Einzahlung':'Einzahlungen'})</span><span class="v">${euro(sum)}</span></div>
+    <div class="sline"><span>Bearbeitungsgeb&uuml;hr</span><span class="v">${euro(FEE)}</span></div>
+    <div class="stotal"><span class="k">Kunde zahlt bar</span><span class="v">${euro(total)}</span></div>`;
+}
+
+/* ===== Submit Zahlung ===== */
+function submitPayment(){
+  const name=document.getElementById('f-name').value.trim();
+  const dob=document.getElementById('f-dob').value;
+  const phone=document.getElementById('f-phone').value.trim();
+  const agent=document.getElementById('f-agent').value.trim();
+  const ownerConfirmed=document.getElementById('f-owner').checked;
+  const err=document.getElementById('f-err');
+  const multi=positions.length>1;
+  const problems=[];
+  if(bestandskunde===null) problems.push("Bitte zuerst beantworten: Ist der Kunde im System hinterlegt? (Ja/Nein)");
+  if(!name||!dob||!phone) problems.push("Nachname, Geburtsdatum und Rufnummer sind Pflicht.");
+  positions.forEach((p,i)=>{
+    const amt=parseFloat(p.amount);
+    if(!amt||amt<=0) problems.push(`Einzahlung ${i+1}: Betrag fehlt.`);
+    if(multi && !p.kundennr.trim()) problems.push(`Einzahlung ${i+1}: Kundennummer ist Pflicht.`);
+  });
+  if(!ownerConfirmed){
+    problems.push("Bitte best\u00e4tigen: Die Daten sind vom Vertragsinhaber.");
+    document.getElementById('confirm-box').classList.add('miss');
+  }
+  if(problems.length){ err.innerHTML=problems.join("<br>"); err.style.display='block'; return; }
+  err.style.display='none';
+
+  const id='p'+Date.now()+Math.floor(Math.random()*1000);
+  const belegNr='BN-'+new Date().getFullYear()+'-'+String(Date.now()).slice(-6);
+  const rec={
+    id, belegNr, name, dob, phone, agent, shop:'Backnang',
+    bestandskunde, ownerConfirmed:true,
+    positions: positions.map(p=>({type:p.type, kundennr:p.kundennr.trim(), amount:round2(parseFloat(p.amount))})),
+    fee:FEE, rechnungenSum:round2(posSum()), total:round2(posSum()+FEE),
+    createdAt:Date.now(), status:'bn',
+    transferId:null, transferAt:null, arrivedAt:null
+  };
+  savePayment(rec); showReceipt(rec);
+  document.getElementById('f-name').value=''; document.getElementById('f-dob').value=''; document.getElementById('f-phone').value='';
+  positions=[{type:"Handyvertrag",kundennr:"",amount:""}]; renderPositions();
+  bestandskunde=null;
+  document.getElementById('bk-ja').classList.remove('sel-ja');
+  document.getElementById('bk-nein').classList.remove('sel-nein');
+  document.getElementById('bk-warn').classList.remove('show');
+  document.getElementById('bk-block').classList.remove('answered');
+  const ownerCb=document.getElementById('f-owner'); ownerCb.checked=false;
+  document.getElementById('confirm-box').classList.remove('checked','miss');
+  toast('Zahlung verbucht \u2013 Geld liegt jetzt in Backnang',"ok");
+}
+function savePayment(rec){
+  if(useFirebase) db.ref('payments/'+rec.id).set(rec);
+  else{ payments[rec.id]=rec; persistLocal(); refreshAll(); }
+}
+function persistLocal(){
+  localStorage.setItem('hetec_payments',JSON.stringify(payments));
+  localStorage.setItem('hetec_moves',JSON.stringify(moves));
+}
+
+/* ===== TRANSFER (Backnang) ===== */
+function bnOpen(){ return Object.values(payments).filter(p=>p.status==='bn'); }
+function bnTransit(){ return Object.values(payments).filter(p=>p.status==='transit'); }
+function bnOpenSum(){ return round2(bnOpen().reduce((s,p)=>s+p.total,0)); }
+
+function renderTransfer(){
+  const open=bnOpen(), soll=bnOpenSum();
+  const rechnungen=round2(open.reduce((s,p)=>s+p.rechnungenSum,0));
+  const gebuehr=round2(open.reduce((s,p)=>s+p.fee,0));
+  document.getElementById('t-soll').textContent=euro(soll);
+  document.getElementById('t-soll-detail').textContent=
+    open.length?`${open.length} Belege \u00b7 Rechnungen ${euro(rechnungen)} + Geb\u00fchren ${euro(gebuehr)}`:'Keine offenen Einnahmen';
+  document.getElementById('t-open-sum').textContent=euro(soll);
+  document.getElementById('t-open-count').textContent=open.length;
+  const transit=bnTransit();
+  document.getElementById('t-transit-sum').textContent=euro(round2(transit.reduce((s,p)=>s+p.total,0)));
+  document.getElementById('t-start-btn').disabled=open.length===0;
+
+  // Liste unterwegs
+  const tl=document.getElementById('transit-list');
+  if(transit.length){
+    // gruppiert nach transferId
+    const groups={};
+    transit.forEach(p=>{ (groups[p.transferId]=groups[p.transferId]||[]).push(p); });
+    tl.innerHTML='<h2 style="font-size:16px;margin:22px 0 12px">Unterwegs zur SHA</h2>'+Object.entries(groups).map(([tid,ps])=>{
+      const sum=round2(ps.reduce((s,p)=>s+p.total,0));
+      return `<div class="txn"><div class="txn-head">
+        <div><div class="txn-name">Transfer ${esc(tid.slice(-6))}</div>
+        <div class="txn-meta">${ps.length} Belege \u00b7 gestartet ${fmtDT(ps[0].transferAt)}</div></div>
+        <span class="status transit"><span class="dot"></span>Unterwegs</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+        <div style="font-size:12px;color:var(--grey);font-weight:600">SUMME</div>
+        <div class="txn-amt" style="color:var(--amber)">${euro(sum)}</div></div></div>`;
+    }).join('');
+  } else tl.innerHTML='';
+}
+
+function startTransfer(adminOverride){
+  const open=bnOpen();
+  const err=document.getElementById('t-err');
+  if(!open.length){ err.textContent='Keine offenen Einnahmen zu transferieren.'; err.style.display='block'; return; }
+  const soll=bnOpenSum();
+  const counted=round2(parseFloat(document.getElementById('t-count').value));
+  if(!counted && counted!==0){ err.textContent='Bitte gez\u00e4hlten Betrag eingeben.'; err.style.display='block'; return; }
+
+  if(Math.abs(counted-soll)>=0.005){
+    if(!adminOverride){
+      err.innerHTML=`Betrag stimmt nicht \u00fcberein!<br>Soll ${euro(soll)} \u2013 gez\u00e4hlt ${euro(counted)} (Differenz ${euro(counted-soll)}).<br>Nur Admin kann abweichenden Betrag freigeben.`;
+      err.style.display='block';
+      toast('Transfer blockiert \u2013 Betrag stimmt nicht',"bad");
+      return;
+    }
+    if(!requireAdmin()) return;
+    if(!confirm(`Abweichung freigeben?\nSoll: ${euro(soll)}\nGez\u00e4hlt: ${euro(counted)}\nDifferenz: ${euro(counted-soll)}`)) return;
+  }
+  err.style.display='none';
+  const transferId='t'+Date.now()+Math.floor(Math.random()*1000);
+  const now=Date.now();
+  const upd={};
+  open.forEach(p=>{ upd[p.id]={...p,status:'transit',transferId,transferAt:now}; });
+  applyPaymentUpdates(upd);
+  document.getElementById('t-count').value='';
+  toast('Transfer gestartet \u2013 Geld unterwegs zur SHA',"ok");
+  renderTransfer();
+}
+
+/* ===== EINGANG (SHA) ===== */
+let pendingTransferId=null;
+function openIncoming(transferId){
+  pendingTransferId=transferId;
+  const ps=Object.values(payments).filter(p=>p.transferId===transferId && p.status==='transit');
+  const sum=round2(ps.reduce((s,p)=>s+p.total,0));
+  document.getElementById('in-expected').textContent=euro(sum);
+  document.getElementById('in-detail').textContent=`${ps.length} Belege aus Backnang \u00b7 gestartet ${fmtDT(ps[0]?.transferAt)}`;
+  document.getElementById('in-count').value='';
+  document.getElementById('in-err').style.display='none';
+  document.getElementById('incoming-modal').classList.add('show');
+}
+function confirmIncoming(adminOverride){
+  const ps=Object.values(payments).filter(p=>p.transferId===pendingTransferId && p.status==='transit');
+  const sum=round2(ps.reduce((s,p)=>s+p.total,0));
+  const counted=round2(parseFloat(document.getElementById('in-count').value));
+  const err=document.getElementById('in-err');
+  if(!counted && counted!==0){ err.textContent='Bitte gez\u00e4hlten Betrag eingeben.'; err.style.display='block'; return; }
+  if(Math.abs(counted-sum)>=0.005){
+    if(!adminOverride){
+      err.innerHTML=`Betrag stimmt nicht!<br>Erwartet ${euro(sum)} \u2013 gez\u00e4hlt ${euro(counted)} (Differenz ${euro(counted-sum)}).<br>Nur Admin kann freigeben.`;
+      err.style.display='block'; toast('Eingang blockiert \u2013 Betrag stimmt nicht',"bad"); return;
+    }
+    if(!requireAdmin()) return;
+    if(!confirm(`Abweichung freigeben?\nErwartet: ${euro(sum)}\nGez\u00e4hlt: ${euro(counted)}`)) return;
+  }
+  const now=Date.now();
+  const upd={};
+  ps.forEach(p=>{ upd[p.id]={...p,status:'sha',arrivedAt:now}; });
+  applyPaymentUpdates(upd);
+  closeModal('incoming-modal');
+  toast('Geld eingegangen \u2013 in SHA-Kasse verbucht',"ok");
+  renderKasse();
+}
+function applyPaymentUpdates(upd){
+  if(useFirebase){ const u={}; Object.entries(upd).forEach(([id,v])=>u['payments/'+id]=v); db.ref().update(u); }
+  else{ Object.assign(payments,upd); persistLocal(); refreshAll(); }
+}
+
+/* ===== ADMIN ===== */
+function adminLogin(){
+  const pw=prompt('Admin-Passwort:');
+  if(pw===null) return;
+  if(pw===ADMIN_PW){ isAdmin=true; applyAdminUI(); toast('Admin angemeldet',"ok"); }
+  else toast('Falsches Passwort',"bad");
+}
+function adminLogout(){ isAdmin=false; applyAdminUI(); toast('Admin abgemeldet'); }
+function requireAdmin(){
+  if(isAdmin) return true;
+  const pw=prompt('Admin-Passwort erforderlich:');
+  if(pw===ADMIN_PW){ isAdmin=true; applyAdminUI(); return true; }
+  toast('Falsches Passwort',"bad"); return false;
+}
+function applyAdminUI(){
+  document.getElementById('admin-locked').style.display=isAdmin?'none':'flex';
+  document.getElementById('admin-unlocked').style.display=isAdmin?'flex':'none';
+  const ks=document.getElementById('kb-start');
+  ks.disabled=!isAdmin;
+  document.getElementById('kb-lock').innerHTML=isAdmin?'&#128275;':'&#128274;';
+  renderKasse();
+}
+
+/* Geld ein-/ausbuchen */
+let cashType='einlage';
+function openCashModal(type){
+  if(!requireAdmin()) return;
+  cashType=type;
+  document.getElementById('cash-title').textContent = type==='einlage'?'Geld einzahlen (Einlage)':'Geld ausbuchen (Entnahme)';
+  document.getElementById('cash-lead').textContent = type==='einlage'?'Bargeld zur Kasse hinzuf\u00fcgen \u2013 z. B. um einen Fehlbetrag auszugleichen.':'Bargeld aus der Kasse entnehmen.';
+  document.getElementById('cash-confirm-btn').textContent = type==='einlage'?'Einzahlen':'Ausbuchen';
+  document.getElementById('cash-amount').value=''; document.getElementById('cash-note').value='';
+  document.getElementById('cash-err').style.display='none';
+  document.getElementById('cash-modal').classList.add('show');
+}
+function confirmCash(){
+  const amt=round2(parseFloat(document.getElementById('cash-amount').value));
+  const note=document.getElementById('cash-note').value.trim();
+  const err=document.getElementById('cash-err');
+  if(!amt||amt<=0||!note){ err.textContent='Betrag und Grund sind Pflicht.'; err.style.display='block'; return; }
+  const id='m'+Date.now()+Math.floor(Math.random()*1000);
+  const rec={id,type:cashType,amount:amt,note,at:Date.now()};
+  if(useFirebase) db.ref('moves/'+id).set(rec);
+  else{ moves[id]=rec; persistLocal(); refreshAll(); }
+  closeModal('cash-modal');
+  toast(cashType==='einlage'?'Einlage gebucht':'Entnahme gebucht',"ok");
+}
+function deleteMove(id){
+  if(!requireAdmin()) return;
+  if(!confirm('Diese Kassenbewegung l\u00f6schen?')) return;
+  if(useFirebase) db.ref('moves/'+id).remove();
+  else{ delete moves[id]; persistLocal(); refreshAll(); }
+  toast('Bewegung gel\u00f6scht');
+}
+
+/* Beleg löschen */
+function deletePayment(id){
+  if(!requireAdmin()) return;
+  const p=payments[id]; if(!p) return;
+  if(!confirm(`Beleg ${p.belegNr} (${p.name}, ${euro(p.total)}) wirklich l\u00f6schen?`)) return;
+  if(useFirebase) db.ref('payments/'+id).remove();
+  else{ delete payments[id]; persistLocal(); refreshAll(); }
+  toast('Beleg gel\u00f6scht');
+}
+
+/* Kassenanfang ändern (Admin) */
+function saveStart(){
+  const v=document.getElementById('kb-start').value;
+  localStorage.setItem('hetec_kbstart',v||'');
+  renderKassenbestand();
+}
+
+/* ===== Beleg: o2 A4-Rechnung (originalgetreu nachgebaut) ===== */
+function invDateStr(ts){ const d=new Date(ts);
+  const p=n=>String(n).padStart(2,'0');
+  return `${p(d.getDate())}.${p(d.getMonth()+1)}.${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+function fakeBars(seed){
+  // dekorative Barcode-Optik (Platzhalter); echter Barcode kommt aus dem Kassensystem
+  const chars='▏▎▍▌█ ▏█▎ ▍▏█▌ ';
+  let s=''; let x=seed||Date.now();
+  for(let i=0;i<70;i++){ x=(x*1103515245+12345)&0x7fffffff; s+=(x%7<3?'█':(x%2?'▏':' ')); }
+  return s;
+}
+function showReceipt(rec){
+  const now=rec.createdAt||Date.now();
+  const berater = rec.agent ? esc(rec.agent) : '';
+  // Positionen: jede Einzahlung eigene Zeile (EIN*), am Ende 1x Gebühr
+  const posRows = rec.positions.map((p,i)=>{
+    const subFields=[];
+    if(p.kundennr) subFields.push(['Kundennummer', esc(p.kundennr)]);
+    subFields.push(['Kunde', esc(rec.name)]);
+    subFields.push(['Telefonnummer', esc(rec.phone)]);
+    if(p.type && p.type!=='Handyvertrag') subFields.push(['Art', esc(p.type)]);
+    const subHtml = subFields.map(f=>`<div class="sl"><span class="a">${f[0]}</span><span>${f[1]}</span></div>`).join('');
+    return `
+      <tr class="main">
+        <td>${i+1}</td>
+        <td>EIN*</td>
+        <td>Einzahlung</td>
+        <td class="c">1</td>
+        <td class="c">STK</td>
+        <td class="r">${euro(p.amount)}</td>
+        <td class="r">0% MwSt</td>
+        <td class="r">${euro(p.amount)}</td>
+      </tr>
+      <tr class="${i===rec.positions.length-1?'':''}">
+        <td></td><td colspan="7"><div class="sub-lines">${subHtml}</div></td>
+      </tr>`;
+  }).join('');
+
+  const feeRow = `
+    <tr class="main rowline">
+      <td>${rec.positions.length+1}</td>
+      <td>109200070300*</td>
+      <td>EINZAHLUNGSGEBUEHR</td>
+      <td class="c">1</td>
+      <td class="c">STK</td>
+      <td class="r">${euro(rec.fee)}</td>
+      <td class="r">19% MwSt</td>
+      <td class="r">${euro(rec.fee)}</td>
+    </tr>`;
+
+  // Summen
+  const netto0 = rec.rechnungenSum;                 // 0% MwSt Basis (Einzahlungen)
+  const feeNetto = round2(rec.fee/1.19);            // Gebühr netto
+  const feeSteuer = round2(rec.fee-feeNetto);       // 19% Steuerbetrag
+  const warenNetto = round2(netto0 + feeNetto);
+  const brutto = rec.total;
+
+  document.getElementById('receipt-content').innerHTML=`
+  <div class="inv">
+    <div class="inv-head">
+      <div class="inv-title">Rechnung</div>
+      <div class="inv-shopname">O2 Vertriebspartner<br>Backnang</div>
+    </div>
+
+    <div class="inv-meta">
+      <table>
+        <tr><td class="lbl">Rechnungsdatum:</td><td>${invDateStr(now)}</td></tr>
+        <tr><td class="lbl">Rechnungsnummer:</td><td>${esc(rec.belegNr)}</td></tr>
+        <tr><td class="lbl">Journalnummer:</td><td>&nbsp;</td></tr>
+        <tr><td class="lbl">Berater:</td><td>${berater||'&nbsp;'}</td></tr>
+      </table>
+    </div>
+
+    <div class="inv-seite">
+      <span class="s-lbl">Seite</span>
+      <span>1.1</span>
+    </div>
+    <div class="inv-barcode">
+      <span class="bars">${fakeBars(now)}</span>
+      <div class="bcnum">&nbsp;</div>
+    </div>
+
+    <table class="pos">
+      <thead>
+        <tr>
+          <th style="width:34px">Pos.</th>
+          <th style="width:120px">Art-Nr.</th>
+          <th>Art-Name</th>
+          <th class="c" style="width:52px">Menge</th>
+          <th class="c" style="width:44px">VPE</th>
+          <th class="r" style="width:110px">Einzelpreis(Brutto)</th>
+          <th class="r" style="width:86px">Steuersatz %</th>
+          <th class="r" style="width:110px">Gesamt(Brutto)</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${posRows}
+        ${feeRow}
+      </tbody>
+    </table>
+
+    <div class="sum-wrap">
+      <div class="sum-left">
+        <div class="sh">Warenwert Netto</div>
+        <div>${euro(netto0)}</div>
+        <div>${euro(feeNetto)}</div>
+        <div style="font-weight:700;margin-top:4px">Rechnungsbetrag Brutto</div>
+      </div>
+      <div class="sum-mid">
+        <div class="sh">Mehrwertsteuer</div>
+        <div>0% MwSt</div>
+        <div>19% MwSt</div>
+      </div>
+      <div class="sum-mid">
+        <div class="sh">Steuerbetrag</div>
+        <div>${euro(0)}</div>
+        <div>${euro(feeSteuer)}</div>
+      </div>
+      <div class="sum-right">
+        <div class="sh">Rechnungsbetrag</div>
+        <div>${euro(netto0)}</div>
+        <div>${euro(rec.fee)}</div>
+        <div style="font-weight:700;margin-top:4px">${euro(brutto)}</div>
+      </div>
+    </div>
+
+    <div class="zahl"><span>Zahlbetrag</span><span>${euro(brutto)}</span></div>
+    <div class="gegeben"><span class="lbl">gegeben&nbsp;&nbsp;Bargeld Euro</span><span>${euro(brutto)}</span></div>
+
+    <div class="tse">
+      <div class="qr-wrap">
+        <div class="qr-box" id="qr-target"></div>
+        <div class="qr-cap">Bewerten Sie uns bei Google</div>
+      </div>
+      <b>TSE</b><br>
+      SN Kasse: &ndash;; Transaktions# TSE: &ndash;; Signatur-Z&auml;hler: &ndash;; Start: &ndash;; Ende: &ndash;; Pr&uuml;fwert TSE: &ndash;
+      <div class="star">* F&uuml;r die mit einem "*" markierten Eintr&auml;ge gilt: Der Verkauf erfolgt in Namen und f&uuml;r Rechnung von Telef&oacute;nica Germany GmbH &amp; Co. OHG. Es gelten die allgemeinen Verkaufs- und Lieferbedingungen der Telef&oacute;nica Germany GmbH &amp; Co. OHG. Leistungszeitpunkt entspricht Rechnungsdatum, sofern nicht anders auf dem Lieferschein aufgef&uuml;hrt.</div>
+    </div>
+
+    <div class="inv-footer">
+      o2 Vertriebspartner Backnang, Uhlandstr. 27, D-71522 Backnang, Tel. 07191/9007910<br>
+      Betreiber: HeTec Shop GmbH, Gesch&auml;ftsf&uuml;hrer: Roland Brunner, UST-IdNr. DE268087004
+      <div class="sep"></div>
+      Telef&oacute;nica Germany GmbH &amp; Co. OHG Georg-Brauchle-Ring 50, D-80992 M&uuml;nchen, Deutschland www.o2.de&nbsp;&nbsp;UST-IdNr. DE 811 889 638
+    </div>
+  </div>`;
+  document.getElementById('receipt-modal').classList.add('show');
+  renderReviewQR();
+}
+
+/* Google-Bewertungs-Link für den QR-Code auf dem Beleg */
+const REVIEW_URL = "https://www.google.com/search?q=o2+Vertriebspartner+Backnang+Uhlandstr+27+Bewertung";
+function renderReviewQR(){
+  const el=document.getElementById('qr-target');
+  if(!el) return;
+  el.innerHTML='';
+  try{
+    if(typeof QRCode!=='undefined'){
+      new QRCode(el,{ text:REVIEW_URL, width:80, height:80, correctLevel:QRCode.CorrectLevel.M });
+    } else {
+      // Fallback: QR als Bild von einem Generator-Dienst
+      const img=document.createElement('img');
+      img.src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data="+encodeURIComponent(REVIEW_URL);
+      img.width=80; img.height=80; el.appendChild(img);
+    }
+  }catch(e){ console.warn('QR fehlgeschlagen',e); }
+}
+
+/* ===== KASSE / Belegliste ===== */
+function setFilter(f){ filter=f; ['bn','transit','sha','all'].forEach(x=>document.getElementById('chip-'+x).classList.toggle('active',x===f)); renderKasse(); }
+function getSorted(){ return Object.values(payments).sort((a,b)=>b.createdAt-a.createdAt); }
+function statusMeta(s){ return s==='bn'?['bn','In Backnang']:s==='transit'?['transit','Unterwegs']:['sha','In SHA']; }
+
+function renderKasse(){
+  const list=document.getElementById('kasse-list');
+  const q=(document.getElementById('search')?.value||'').toLowerCase().trim();
+  let items=getSorted();
+  if(filter!=='all') items=items.filter(p=>p.status===filter);
+  if(q) items=items.filter(p=>{
+    const inHead=(p.name||'').toLowerCase().includes(q)||(p.phone||'').toLowerCase().includes(q);
+    const inPos=(p.positions||[]).some(x=>(x.kundennr||'').toLowerCase().includes(q));
+    return inHead||inPos;
+  });
+  renderKassenbestand();
+  if(!items.length){
+    list.innerHTML=`<div class="empty"><div class="ico">&#128179;</div>${filter==='bn'?'Kein Geld in Backnang offen.':'Keine Eintr\u00e4ge.'}</div>`;
+    return;
+  }
+  list.innerHTML=items.map(p=>{
+    const [cls,lbl]=statusMeta(p.status);
+    const posRows=(p.positions||[]).map((x,i)=>`
+      <div class="txn-posrow"><div><span class="pk">${i+1}. ${esc(x.type)}</span>${x.kundennr?`<div class="psub">Kundennr.: ${esc(x.kundennr)}</div>`:''}</div>
+      <div class="pv">${euro(x.amount)}</div></div>`).join('');
+    let action='';
+    if(p.status==='transit') action=`<button class="btn btn-blue" onclick="openIncoming('${p.transferId}')">&#128230; Geld eingegangen</button>`;
+    else if(p.status==='sha') action=`<div style="flex:1;font-size:12.5px;color:var(--grey);align-self:center">Angekommen ${fmtDT(p.arrivedAt)}</div>`;
+    else action=`<div style="flex:1;font-size:12.5px;color:var(--grey);align-self:center">Wartet auf Transfer</div>`;
+    const adminBtn=isAdmin?`<button class="btn btn-danger" style="flex:0 0 auto;padding:11px 14px" onclick="deletePayment('${p.id}')">L\u00f6schen</button>`:'';
+    return `<div class="txn ${cls==='sha'?'sha':''}">
+      <div class="txn-head"><div>
+        <div class="txn-name">${esc(p.name)}</div>
+        <div class="txn-meta">Beleg ${esc(p.belegNr)} \u00b7 ${fmtDT(p.createdAt)} \u00b7 ${esc(p.phone)}</div></div>
+        <span class="status ${cls}"><span class="dot"></span>${lbl}</span></div>
+      <div class="txn-meta">Geb.-Datum ${fmtDate(p.dob)}${p.agent?' \u00b7 Kassierer BN: '+esc(p.agent):''}${p.bestandskunde==='nein'?' \u00b7 <span class="flag-warn">&#9888; nicht im System</span>':''}</div>
+      <div class="txn-poslist">${posRows}
+        <div class="txn-posrow" style="color:var(--grey)"><div>Bearbeitungsgeb&uuml;hr</div><div class="pv" style="color:var(--grey)">${euro(p.fee)}</div></div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:12px;color:var(--grey);font-weight:600">GESAMT BAR</div><div class="txn-amt">${euro(p.total)}</div></div>
+      <div class="txn-actions">${action}
+        <button class="btn btn-mini" onclick='showReceipt(${JSON.stringify(p).replace(/'/g,"&#39;")})'>Beleg</button>${adminBtn}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ===== Kassenbestand ===== */
+function movesSum(){ return round2(Object.values(moves).reduce((s,m)=>s+(m.type==='einlage'?m.amount:-m.amount),0)); }
+function arrivedSum(){ return round2(Object.values(payments).filter(p=>p.status==='sha').reduce((s,p)=>s+p.total,0)); }
+
+function renderKassenbestand(){
+  const startEl=document.getElementById('kb-start'); if(!startEl) return;
+  if(startEl.dataset.init!=='1'){
+    const s=localStorage.getItem('hetec_kbstart'); if(s!=null) startEl.value=s;
+    const savedIst=localStorage.getItem('hetec_kbist'); if(savedIst!=null) document.getElementById('kb-ist').value=savedIst;
+    startEl.dataset.init='1';
+    startEl.addEventListener('change',saveStart);
+  }
+  const start=round2(parseFloat(startEl.value)||0);
+  const arrived=arrivedSum();
+  const mv=movesSum();
+  const soll=round2(start+arrived+mv);
+  const arrCount=Object.values(payments).filter(p=>p.status==='sha').length;
+  const mvCount=Object.keys(moves).length;
+
+  document.getElementById('kb-income').textContent=euro(arrived);
+  document.getElementById('kb-income-count').textContent=arrCount+(arrCount===1?' Beleg':' Belege');
+  document.getElementById('kb-moves').textContent=(mv>=0?'+':'')+euro(mv);
+  document.getElementById('kb-moves-count').textContent=mvCount+(mvCount===1?' Bewegung':' Bewegungen');
+  document.getElementById('kb-soll').textContent=euro(soll);
+
+  const istEl=document.getElementById('kb-ist');
+  const ist=istEl.value===''?null:round2(parseFloat(istEl.value)||0);
+  localStorage.setItem('hetec_kbist',istEl.value);
+  const diffEl=document.getElementById('kb-diff'), label=document.getElementById('kb-diff-label'), val=document.getElementById('kb-diff-val');
+  if(ist===null){ diffEl.className='kb-diff ok'; label.textContent='Ist-Bestand eingeben f\u00fcr Abgleich'; val.textContent='\u2013'; }
+  else{ const d=round2(ist-soll); const ok=Math.abs(d)<0.005;
+    diffEl.className='kb-diff '+(ok?'ok':'bad'); label.textContent=ok?'Kasse stimmt':(d>0?'\u00dcberschuss':'Fehlbetrag'); val.textContent=(d>0?'+':'')+euro(d); }
+
+  // Bewegungsliste
+  const ml=document.getElementById('kb-moves-list');
+  const list=Object.values(moves).sort((a,b)=>b.at-a.at);
+  if(list.length){
+    ml.innerHTML='<div style="font-weight:700;font-size:13px;color:var(--grey);margin:14px 0 8px">Kassenbewegungen</div>'+list.map(m=>`
+      <div class="move-row"><div><div class="mk">${m.type==='einlage'?'Einlage':'Entnahme'} \u00b7 ${esc(m.note)}</div>
+      <div class="msub">${fmtDT(m.at)}</div></div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span class="mv ${m.type==='einlage'?'plus':'minus'}">${m.type==='einlage'?'+':'\u2212'}${euro(m.amount)}</span>
+        ${isAdmin?`<button class="move-del" onclick="deleteMove('${m.id}')" title="L\u00f6schen">&times;</button>`:''}
+      </div></div>`).join('');
+  } else ml.innerHTML='';
+
+  // Kasse-Stats oben
+  const transitSum=round2(Object.values(payments).filter(p=>p.status==='transit').reduce((s,p)=>s+p.total,0));
+  document.getElementById('k-transit').textContent=euro(transitSum);
+  document.getElementById('k-soll').textContent=euro(soll);
+  document.getElementById('k-diff').textContent = ist===null?'\u2013':((ist-soll>0?'+':'')+euro(ist-soll));
+}
+
+/* ===== Badges + Alerts + Stats übergreifend ===== */
+function refreshAll(){
+  const openSum=bnOpenSum(), openCount=bnOpen().length;
+  const transit=Object.values(payments).filter(p=>p.status==='transit');
+  const transitSum=round2(transit.reduce((s,p)=>s+p.total,0));
+
+  // Badge Transfer-Tab = offene Belege in Backnang
+  const bt=document.getElementById('badge-transfer');
+  bt.textContent=openCount; bt.classList.toggle('show',openCount>0);
+  // Badge Kasse-Tab = unterwegs (auf SHA wartend)
+  const bk=document.getElementById('badge-kasse');
+  bk.textContent=transit.length; bk.classList.toggle('show',transit.length>0);
+
+  // Alert Erfassen (Geld wartet in Backnang)
+  const ab=document.getElementById('alert-bn');
+  if(openCount>0){ ab.classList.add('show');
+    document.getElementById('alert-bn-text').textContent=openCount===1?'1 Beleg wartet in Backnang':openCount+' Belege warten in Backnang';
+    document.getElementById('alert-bn-sub').textContent=euro(openSum)+' bar \u2013 bereit zum Transfer nach SHA';
+  } else ab.classList.remove('show');
+
+  // Alert Kasse (Geld unterwegs)
+  const ai=document.getElementById('alert-incoming');
+  if(transit.length>0){ ai.classList.add('show');
+    document.getElementById('alert-incoming-text').textContent=euro(transitSum)+' unterwegs zur SHA';
+    document.getElementById('alert-incoming-sub').textContent=transit.length+' Beleg(e) \u2013 bei Ankunft &bdquo;Geld eingegangen&ldquo; best\u00e4tigen';
+  } else ai.classList.remove('show');
+
+  if(currentTab==='transfer') renderTransfer();
+  if(currentTab==='kasse') renderKassenbestand();
+}
+function scrollToIncoming(){ setFilter('transit'); document.getElementById('kasse-list').scrollIntoView({behavior:'smooth'}); }
+
+/* ===== INIT ===== */
+positions=[{type:"Handyvertrag",kundennr:"",amount:""}]; renderPositions();
+applyAdminUI();
+if(useFirebase){
+  db.ref('payments').on('value',s=>{ payments=s.val()||{}; refreshAll(); if(currentTab==='kasse') renderKasse(); });
+  db.ref('moves').on('value',s=>{ moves=s.val()||{}; if(currentTab==='kasse') renderKassenbestand(); });
+}else{
+  payments=JSON.parse(localStorage.getItem('hetec_payments')||'{}');
+  moves=JSON.parse(localStorage.getItem('hetec_moves')||'{}');
+  refreshAll();
+}
+</script>
+</body>
+</html>
