@@ -8,7 +8,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
- :root{
+  :root{
     --o2-blue:#0019A5; --o2-blue-dark:#000A57;
     --o2-mag:#E4007E; --o2-mag-dark:#B3005F;
     --ink:#1b1b2f; --grey:#6b6b7d; --line:#e3e3ee; --bg:#f4f5fb;
@@ -220,6 +220,19 @@
   .kb-note{font-size:12px;color:var(--grey);margin-top:8px}
   .moves-list{margin-top:12px}
 
+  .pending-box{margin-top:14px;border:1.5px solid var(--amber);background:var(--amber-bg);border-radius:12px;padding:14px 16px}
+  .pending-box.zero{border-color:var(--ok);background:var(--ok-bg)}
+  .pending-head{display:flex;align-items:center;gap:12px}
+  .pending-head .pico{font-size:24px;line-height:1}
+  .pending-title{font-weight:700;font-size:14px;color:#8a5a00}
+  .pending-box.zero .pending-title{color:var(--ok)}
+  .pending-sub{font-size:12px;color:#8a5a00;opacity:.85}
+  .pending-box.zero .pending-sub{color:var(--ok)}
+  .pending-amt{margin-left:auto;font-size:22px;font-weight:800;color:var(--amber)}
+  .pending-box.zero .pending-amt{color:var(--ok)}
+  .pending-detail{font-size:12px;color:#8a5a00;margin-top:8px;display:flex;gap:16px;flex-wrap:wrap}
+  .pending-detail span b{font-weight:700}
+
   /* Bestandskunden-Abfrage */
   .bk-block{border:2px solid var(--o2-blue);border-radius:14px;padding:16px;margin-bottom:18px;background:#f7f8ff}
   .bk-block.answered{border-color:var(--line);background:#fbfbfe}
@@ -279,9 +292,51 @@
   .check-box .cbig{font-size:26px;font-weight:800;color:var(--o2-blue)}
   .check-box .clabel{font-size:12.5px;color:var(--grey);font-weight:600}
 
-  @media print{
-    /* Alles ausblenden ... */
-    body > *{display:none!important}
+  /* Rollen-Auswahl */
+  .role-screen{position:fixed;inset:0;z-index:300;background:linear-gradient(135deg,var(--o2-blue),var(--o2-blue-dark));
+    display:flex;align-items:center;justify-content:center;padding:20px}
+  .role-card{background:#fff;border-radius:20px;padding:32px 28px;max-width:440px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+  .role-card h1{font-size:22px;margin:0 0 6px}
+  .role-card p{color:var(--grey);font-size:14px;margin:0 0 22px}
+  .role-btns{display:flex;flex-direction:column;gap:12px}
+  .role-btn{padding:20px;border-radius:14px;border:2px solid var(--line);background:#fbfbfe;cursor:pointer;
+    font-family:inherit;text-align:left;transition:.15s;display:flex;align-items:center;gap:14px}
+  .role-btn:hover{border-color:var(--o2-blue);background:#f0f2fd}
+  .role-btn .ri{font-size:28px}
+  .role-btn .rt{font-weight:700;font-size:16px;color:var(--ink)}
+  .role-btn .rs{font-size:12.5px;color:var(--grey);font-weight:500}
+
+  /* Freigabe-Anfragen */
+  .freigabe-box{border:2px solid var(--o2-mag);background:#fff5fb;border-radius:14px;padding:16px;margin-bottom:16px}
+  .freigabe-box.pending-shake{animation:shake 0.6s ease-in-out infinite}
+  .freigabe-item{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px}
+  .freigabe-item:last-child{margin-bottom:0}
+  .freigabe-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px}
+  .freigabe-amt{font-size:20px;font-weight:800;color:var(--o2-mag)}
+  .freigabe-sub{font-size:12.5px;color:var(--grey)}
+  .freigabe-actions{display:flex;gap:8px;margin-top:10px}
+  .freigabe-actions .btn{padding:11px;font-size:14px;flex:1;margin:0}
+  .btn-approve{background:var(--ok);color:#fff}
+  .btn-approve:hover{background:#087532}
+  .btn-reject{background:#fdeaf4;color:var(--o2-mag)}
+  .btn-reject:hover{background:#f9d3e7}
+  .deck-note{font-size:12px;margin-top:8px;font-weight:600}
+  .deck-ok{color:var(--ok)}
+  .deck-bad{color:var(--o2-mag)}
+
+  /* Waiting overlay (Backnang wartet auf Freigabe) */
+  .wait-overlay{display:none;position:fixed;inset:0;z-index:180;background:rgba(15,15,40,.6);
+    align-items:center;justify-content:center;padding:20px}
+  .wait-overlay.show{display:flex}
+  .wait-card{background:#fff;border-radius:18px;padding:28px;max-width:420px;width:100%;text-align:center}
+  .wait-card .wi{font-size:40px;margin-bottom:10px}
+  .wait-card h2{margin:0 0 8px;font-size:19px}
+  .wait-card p{color:var(--grey);font-size:14px;margin:0 0 6px}
+  .wait-amt{font-size:26px;font-weight:800;color:var(--o2-mag);margin:10px 0}
+  .spinner{width:34px;height:34px;border:4px solid var(--line);border-top-color:var(--o2-blue);border-radius:50%;
+    animation:spin 0.9s linear infinite;margin:14px auto 0}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
     /* ... außer dem Beleg-Modal */
     body > #receipt-modal{display:block!important}
     #receipt-modal{position:static!important;background:none!important;padding:0!important;inset:auto!important}
@@ -296,14 +351,44 @@
 </head>
 <body>
 
+<div class="role-screen no-print" id="role-screen" style="display:none">
+  <div class="role-card">
+    <h1>Standort w&auml;hlen</h1>
+    <p>Bitte w&auml;hle deinen Shop. Du kannst den passenden Link auch direkt speichern.</p>
+    <div class="role-btns">
+      <button class="role-btn" onclick="setRole('backnang')">
+        <span class="ri">&#128179;</span>
+        <span><span class="rt">Shop Backnang</span><br><span class="rs">Zahlung erfassen &amp; Transfer starten</span></span>
+      </button>
+      <button class="role-btn" onclick="setRole('sha')">
+        <span class="ri">&#127974;</span>
+        <span><span class="rt">Shop Schw&auml;bisch Hall</span><br><span class="rs">Kasse, Geldeingang &amp; Freigaben</span></span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="wait-overlay no-print" id="wait-overlay">
+  <div class="wait-card">
+    <div class="wi">&#9203;</div>
+    <h2>Warte auf Freigabe aus Schw&auml;bisch Hall</h2>
+    <p>Das Wechselgeld in SHA reicht f&uuml;r diese Einzahlung nicht aus.</p>
+    <div class="wait-amt" id="wait-amt">0,00 &euro;</div>
+    <p>Schw&auml;bisch Hall wurde benachrichtigt und muss die Einzahlung freigeben.</p>
+    <div class="spinner"></div>
+    <button class="btn btn-ghost" onclick="cancelFreigabe()">Anfrage abbrechen</button>
+  </div>
+</div>
+
 <header>
   <div class="header-inner">
     <div class="logo">HT</div>
     <div>
       <div class="htitle">Rechnung einzahlen</div>
-      <div class="hsub">HeTec &middot; Barzahlungs-Verbund Backnang &harr; Schw&auml;bisch Hall</div>
+      <div class="hsub" id="header-sub">HeTec &middot; Barzahlungs-Verbund</div>
     </div>
   </div>
+  <button class="btn-admin ghost no-print" id="switch-role-btn" style="margin-left:auto;display:none" onclick="clearRole()">Standort wechseln</button>
 </header>
 
 <div class="wrap">
@@ -415,6 +500,12 @@
 
   <!-- ============ KASSE (SHA) ============ -->
   <div id="view-kasse" style="display:none">
+    <div class="freigabe-box pending-shake" id="freigabe-box" style="display:none">
+      <div style="font-weight:800;font-size:15px;color:var(--o2-mag);margin-bottom:4px">&#128681; Freigabe erforderlich</div>
+      <div style="font-size:12.5px;color:var(--grey);margin-bottom:12px">Backnang m&ouml;chte einzahlen, aber das Wechselgeld in SHA reicht nicht. Kasse w&uuml;rde ins Minus gehen.</div>
+      <div id="freigabe-list"></div>
+    </div>
+
     <div class="alert blue" id="alert-incoming" onclick="scrollToIncoming()">
       <span class="ico">&#128230;</span>
       <div class="txt"><b id="alert-incoming-text">Geld unterwegs</b><span id="alert-incoming-sub"></span></div>
@@ -422,14 +513,14 @@
     </div>
 
     <div class="stats">
-      <div class="stat amber"><div class="n" id="k-transit">0,00 &euro;</div><div class="l">Unterwegs (erwartet)</div></div>
-      <div class="stat green"><div class="n" id="k-soll">0,00 &euro;</div><div class="l">Soll-Bestand Kasse</div></div>
+      <div class="stat green"><div class="n" id="k-soll">0,00 &euro;</div><div class="l">Soll-Bestand SHA</div></div>
+      <div class="stat amber"><div class="n" id="k-pending">0,00 &euro;</div><div class="l">Noch nicht in SHA</div></div>
       <div class="stat"><div class="n" id="k-diff">&ndash;</div><div class="l">Differenz Ist/Soll</div></div>
     </div>
 
     <div class="admin-bar" id="admin-bar">
       <div class="admin-locked" id="admin-locked">
-        <span>&#128274; Admin: Kassenanfang, Beleg l&ouml;schen, Geld ein-/ausbuchen</span>
+        <span>&#128274; Admin: Grundbestand/Wechselgeld, Beleg l&ouml;schen, Geld ein-/ausbuchen</span>
         <button class="btn-admin" onclick="adminLogin()">Anmelden</button>
       </div>
       <div class="admin-unlocked" id="admin-unlocked" style="display:none">
@@ -444,17 +535,17 @@
 
     <div class="card" style="margin-bottom:16px">
       <h2 style="font-size:17px">Kassenbestand Schw&auml;bisch Hall</h2>
-      <p class="lead" style="margin-bottom:14px">Soll = Kassenanfang + angekommenes Geld + Einlagen &minus; Entnahmen.</p>
+      <p class="lead" style="margin-bottom:14px">Buchhalterisch sitzt die Kasse in SHA. Jede in Backnang erfasste Einzahlung z&auml;hlt <b>sofort</b> zum SHA-Soll &ndash; auch wenn das Bargeld noch nicht physisch da ist.</p>
       <div class="kb-grid">
         <div class="kb-cell">
-          <label>Kassenanfang <span id="kb-lock" style="font-weight:500">&#128274;</span></label>
+          <label>Grundbestand / Wechselgeld <span id="kb-lock" style="font-weight:500">&#128274;</span></label>
           <div class="amount-wrap"><span class="eur">&euro;</span>
-            <input id="kb-start" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0,00" disabled oninput="renderKassenbestand()"></div>
+            <input id="kb-start" type="number" inputmode="decimal" step="0.01" min="0" placeholder="z. B. 300,00" disabled oninput="renderKassenbestand()"></div>
         </div>
         <div class="kb-cell">
-          <label>+ Angekommen</label>
+          <label>+ Einzahlungen (erfasst)</label>
           <div class="big" id="kb-income">0,00 &euro;</div>
-          <div class="kb-note" id="kb-income-count">0 Transfers</div>
+          <div class="kb-note" id="kb-income-count">0 Belege</div>
         </div>
         <div class="kb-cell">
           <label>&plusmn; Bewegungen</label>
@@ -464,7 +555,7 @@
       </div>
       <div class="kb-grid" style="margin-top:12px;grid-template-columns:1fr 1fr">
         <div class="kb-cell" style="background:#f0f2fd;border-color:#d3d7ef">
-          <label>= Soll-Bestand</label>
+          <label>= Soll-Bestand SHA</label>
           <div class="big" id="kb-soll">0,00 &euro;</div>
         </div>
         <div class="kb-cell">
@@ -474,6 +565,30 @@
         </div>
       </div>
       <div class="kb-diff ok" id="kb-diff"><span id="kb-diff-label">Differenz</span><span class="d" id="kb-diff-val">0,00 &euro;</span></div>
+
+      <div class="pending-box" id="pending-box">
+        <div class="pending-head">
+          <span class="pico">&#128184;</span>
+          <div>
+            <div class="pending-title" id="pending-title">Noch nicht physisch in SHA</div>
+            <div class="pending-sub" id="pending-sub">Dieses Bargeld liegt noch in Backnang oder ist unterwegs.</div>
+          </div>
+          <div class="pending-amt" id="pending-amt">0,00 &euro;</div>
+        </div>
+        <div class="pending-detail" id="pending-detail"></div>
+      </div>
+
+      <div class="pending-box" id="deck-box" style="margin-top:12px">
+        <div class="pending-head">
+          <span class="pico">&#127974;</span>
+          <div>
+            <div class="pending-title" id="deck-title">Wechselgeld-Deckung SHA</div>
+            <div class="pending-sub" id="deck-sub">Grundbestand &minus; noch nicht abtransportiertes Geld</div>
+          </div>
+          <div class="pending-amt" id="deck-amt">0,00 &euro;</div>
+        </div>
+      </div>
+
       <div class="moves-list" id="kb-moves-list"></div>
     </div>
 
@@ -584,9 +699,13 @@ const TYPES = ["Handyvertrag","My Handy","DSL","Sonstiges"];
 /* payment.status: 'bn' (Geld in Backnang) | 'transit' (unterwegs) | 'sha' (angekommen) */
 let payments={};      // {id:{...}}
 let moves={};         // Kassenbewegungen {id:{type:'einlage'|'entnahme', amount, note, at}}
+let freigaben={};     // Freigabe-Anfragen {id:{amount, at, status:'pending'|'approved'|'rejected', by}}
 let positions=[];
 let filter="bn", currentTab="erfassen", isAdmin=false;
 let bestandskunde=null;   // 'ja' | 'nein' | null
+let ROLE=null;            // 'backnang' | 'sha'
+let myFreigabeId=null;    // Backnang: aktuelle wartende Anfrage
+let pendingSubmitRec=null;// Zahlung, die auf Freigabe wartet
 
 function setBestandskunde(v){
   bestandskunde=v;
@@ -617,6 +736,46 @@ function fmtDT(ts){ if(!ts) return "\u2013"; const d=new Date(ts); return d.toLo
 function toast(m,kind){ const t=document.getElementById('toast'); t.textContent=m; t.className='toast show'+(kind?' '+kind:''); setTimeout(()=>t.className='toast',3000); }
 function esc(s){ return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+
+/* ===== ROLLEN / STANDORT ===== */
+function getRoleFromURL(){
+  const p=new URLSearchParams(location.search).get('shop');
+  if(p==='backnang'||p==='bn') return 'backnang';
+  if(p==='sha'||p==='schwaebischhall'||p==='hall') return 'sha';
+  return null;
+}
+function setRole(r){
+  ROLE=r;
+  try{ localStorage.setItem('hetec_role',r); }catch(e){}
+  applyRole();
+}
+function clearRole(){
+  try{ localStorage.removeItem('hetec_role'); }catch(e){}
+  ROLE=null;
+  // URL-Parameter entfernen
+  if(location.search){ history.replaceState(null,'',location.pathname); }
+  document.getElementById('role-screen').style.display='flex';
+  document.getElementById('switch-role-btn').style.display='none';
+}
+function applyRole(){
+  const rs=document.getElementById('role-screen');
+  if(!ROLE){ rs.style.display='flex'; return; }
+  rs.style.display='none';
+  document.getElementById('switch-role-btn').style.display='inline-block';
+  const sub=document.getElementById('header-sub');
+  const tabErf=document.getElementById('tab-erfassen');
+  const tabTra=document.getElementById('tab-transfer');
+  const tabKas=document.getElementById('tab-kasse');
+  if(ROLE==='backnang'){
+    sub.textContent='Shop Backnang \u00b7 Zahlung & Transfer';
+    tabErf.style.display=''; tabTra.style.display=''; tabKas.style.display='none';
+    switchTab('erfassen');
+  } else {
+    sub.textContent='Shop Schw\u00e4bisch Hall \u00b7 Kasse & Freigaben';
+    tabErf.style.display='none'; tabTra.style.display='none'; tabKas.style.display='';
+    switchTab('kasse');
+  }
+}
 
 function switchTab(t){
   currentTab=t;
@@ -704,8 +863,22 @@ function submitPayment(){
     positions: positions.map(p=>({type:p.type, kundennr:p.kundennr.trim(), amount:round2(parseFloat(p.amount))})),
     fee:FEE, rechnungenSum:round2(posSum()), total:round2(posSum()+FEE),
     createdAt:Date.now(), status:'bn',
-    transferId:null, transferAt:null, arrivedAt:null
+    transferId:null, transferAt:null, arrivedAt:null,
+    freigabe:false
   };
+
+  // ===== Wechselgeld-Deckung prüfen =====
+  if(!istGedeckt(rec.total)){
+    // Harte Sperre: Freigabe aus SHA erforderlich
+    requestFreigabe(rec);
+    return;
+  }
+
+  finalizePayment(rec);
+}
+
+/* Zahlung endgültig verbuchen + Formular zurücksetzen */
+function finalizePayment(rec){
   savePayment(rec); showReceipt(rec);
   document.getElementById('f-name').value=''; document.getElementById('f-dob').value=''; document.getElementById('f-phone').value='';
   positions=[{type:"Handyvertrag",kundennr:"",amount:""}]; renderPositions();
@@ -718,6 +891,27 @@ function submitPayment(){
   document.getElementById('confirm-box').classList.remove('checked','miss');
   toast('Zahlung verbucht \u2013 Geld liegt jetzt in Backnang',"ok");
 }
+
+/* Backnang: Freigabe-Anfrage an SHA stellen und warten */
+function requestFreigabe(rec){
+  const fid='f'+Date.now()+Math.floor(Math.random()*1000);
+  const freq={
+    id:fid, amount:rec.total, name:rec.name, phone:rec.phone,
+    deckung:deckung(), fehlbetrag:round2(rec.total-deckung()),
+    at:Date.now(), status:'pending', by:null
+  };
+  myFreigabeId=fid;
+  pendingSubmitRec=rec;
+  saveFreigabe(freq);
+  document.getElementById('wait-amt').textContent=euro(rec.total);
+  document.getElementById('wait-overlay').classList.add('show');
+  toast('Freigabe in Schw\u00e4bisch Hall angefordert',"bad");
+}
+function cancelFreigabe(){
+  if(myFreigabeId){ updateFreigabe(myFreigabeId,{status:'cancelled'}); }
+  myFreigabeId=null; pendingSubmitRec=null;
+  document.getElementById('wait-overlay').classList.remove('show');
+}
 function savePayment(rec){
   if(useFirebase) db.ref('payments/'+rec.id).set(rec);
   else{ payments[rec.id]=rec; persistLocal(); refreshAll(); }
@@ -725,6 +919,29 @@ function savePayment(rec){
 function persistLocal(){
   localStorage.setItem('hetec_payments',JSON.stringify(payments));
   localStorage.setItem('hetec_moves',JSON.stringify(moves));
+  localStorage.setItem('hetec_freigaben',JSON.stringify(freigaben));
+}
+
+/* ===== WECHSELGELD-DECKUNG & FREIGABE ===== */
+/* Deckung = Grundbestand - noch nicht abtransportiertes Geld (bn + transit) */
+function grundbestand(){ return round2(parseFloat(localStorage.getItem('hetec_kbstart'))||0); }
+function nichtAbtransportiert(){
+  return round2(Object.values(payments)
+    .filter(p=>p.status==='bn'||p.status==='transit')
+    .reduce((s,p)=>s+p.total,0));
+}
+function deckung(){ return round2(grundbestand()-nichtAbtransportiert()); }
+
+/* Prüfen ob eine neue Einzahlung von 'amount' noch gedeckt ist */
+function istGedeckt(amount){ return round2(deckung()-round2(amount)) >= -0.005; }
+
+function saveFreigabe(rec){
+  if(useFirebase) db.ref('freigaben/'+rec.id).set(rec);
+  else{ freigaben[rec.id]=rec; persistLocal(); refreshAll(); }
+}
+function updateFreigabe(id,upd){
+  if(useFirebase) db.ref('freigaben/'+id).update(upd);
+  else{ Object.assign(freigaben[id],upd); persistLocal(); refreshAll(); }
 }
 
 /* ===== TRANSFER (Backnang) ===== */
@@ -1121,7 +1338,19 @@ function renderKasse(){
 
 /* ===== Kassenbestand ===== */
 function movesSum(){ return round2(Object.values(moves).reduce((s,m)=>s+(m.type==='einlage'?m.amount:-m.amount),0)); }
-function arrivedSum(){ return round2(Object.values(payments).filter(p=>p.status==='sha').reduce((s,p)=>s+p.total,0)); }
+/* Alle erfassten Einzahlungen zählen ab sofort zum SHA-Soll (egal welcher Status) */
+function erfasstSum(){ return round2(Object.values(payments).reduce((s,p)=>s+p.total,0)); }
+/* Bargeld, das noch NICHT physisch in SHA ist (in Backnang + unterwegs) */
+function pendingCash(){
+  const bn=Object.values(payments).filter(p=>p.status==='bn');
+  const tr=Object.values(payments).filter(p=>p.status==='transit');
+  return {
+    bnSum: round2(bn.reduce((s,p)=>s+p.total,0)),
+    trSum: round2(tr.reduce((s,p)=>s+p.total,0)),
+    total: round2(bn.reduce((s,p)=>s+p.total,0)+tr.reduce((s,p)=>s+p.total,0)),
+    bnCount: bn.length, trCount: tr.length
+  };
+}
 
 function renderKassenbestand(){
   const startEl=document.getElementById('kb-start'); if(!startEl) return;
@@ -1131,15 +1360,15 @@ function renderKassenbestand(){
     startEl.dataset.init='1';
     startEl.addEventListener('change',saveStart);
   }
-  const start=round2(parseFloat(startEl.value)||0);
-  const arrived=arrivedSum();
+  const start=round2(parseFloat(startEl.value)||0);   // Grundbestand/Wechselgeld
+  const erfasst=erfasstSum();                          // alle Einzahlungen ab Erfassung
   const mv=movesSum();
-  const soll=round2(start+arrived+mv);
-  const arrCount=Object.values(payments).filter(p=>p.status==='sha').length;
+  const soll=round2(start+erfasst+mv);
+  const erfCount=Object.values(payments).length;
   const mvCount=Object.keys(moves).length;
 
-  document.getElementById('kb-income').textContent=euro(arrived);
-  document.getElementById('kb-income-count').textContent=arrCount+(arrCount===1?' Beleg':' Belege');
+  document.getElementById('kb-income').textContent=euro(erfasst);
+  document.getElementById('kb-income-count').textContent=erfCount+(erfCount===1?' Beleg':' Belege');
   document.getElementById('kb-moves').textContent=(mv>=0?'+':'')+euro(mv);
   document.getElementById('kb-moves-count').textContent=mvCount+(mvCount===1?' Bewegung':' Bewegungen');
   document.getElementById('kb-soll').textContent=euro(soll);
@@ -1148,9 +1377,65 @@ function renderKassenbestand(){
   const ist=istEl.value===''?null:round2(parseFloat(istEl.value)||0);
   localStorage.setItem('hetec_kbist',istEl.value);
   const diffEl=document.getElementById('kb-diff'), label=document.getElementById('kb-diff-label'), val=document.getElementById('kb-diff-val');
-  if(ist===null){ diffEl.className='kb-diff ok'; label.textContent='Ist-Bestand eingeben f\u00fcr Abgleich'; val.textContent='\u2013'; }
-  else{ const d=round2(ist-soll); const ok=Math.abs(d)<0.005;
-    diffEl.className='kb-diff '+(ok?'ok':'bad'); label.textContent=ok?'Kasse stimmt':(d>0?'\u00dcberschuss':'Fehlbetrag'); val.textContent=(d>0?'+':'')+euro(d); }
+
+  // Pending: Bargeld noch nicht physisch in SHA
+  const pend=pendingCash();
+  const pbox=document.getElementById('pending-box');
+  document.getElementById('pending-amt').textContent=euro(pend.total);
+  if(pend.total<0.005){
+    pbox.classList.add('zero');
+    document.getElementById('pending-title').textContent='Alles Bargeld ist in SHA';
+    document.getElementById('pending-sub').textContent='Ist-Bestand sollte mit dem Soll \u00fcbereinstimmen.';
+    document.getElementById('pending-detail').innerHTML='';
+  } else {
+    pbox.classList.remove('zero');
+    document.getElementById('pending-title').textContent='Noch nicht physisch in SHA';
+    document.getElementById('pending-sub').textContent='Dieses Bargeld z\u00e4hlt schon zum Soll, liegt aber noch in Backnang / ist unterwegs.';
+    document.getElementById('pending-detail').innerHTML=
+      `<span>In Backnang: <b>${euro(pend.bnSum)}</b> (${pend.bnCount})</span>`+
+      `<span>Unterwegs: <b>${euro(pend.trSum)}</b> (${pend.trCount})</span>`;
+  }
+
+  if(ist===null){
+    diffEl.className='kb-diff ok'; label.textContent='Ist-Bestand eingeben f\u00fcr Abgleich'; val.textContent='\u2013';
+  } else {
+    const d=round2(ist-soll);
+    const ok=Math.abs(d)<0.005;
+    // erwartete Lücke = pending (dieses Geld fehlt physisch noch)
+    const expectedGap=round2(-pend.total);
+    if(ok){
+      diffEl.className='kb-diff ok'; label.textContent='Kasse stimmt'; val.textContent='+'+euro(0);
+    } else if(Math.abs(d-expectedGap)<0.005 && pend.total>0){
+      // Fehlbetrag entspricht exakt dem noch nicht angekommenen Geld → alles korrekt
+      diffEl.className='kb-diff ok';
+      label.textContent='Passt \u2013 Fehlbetrag = noch nicht angekommenes Geld';
+      val.textContent=euro(d);
+    } else {
+      diffEl.className='kb-diff bad';
+      label.textContent=d>0?'\u00dcberschuss (pr\u00fcfen!)':'Fehlbetrag (pr\u00fcfen!)';
+      val.textContent=(d>0?'+':'')+euro(d);
+    }
+  }
+
+  // Wechselgeld-Deckung
+  const deckBox=document.getElementById('deck-box');
+  if(deckBox){
+    const dv=deckung();
+    document.getElementById('deck-amt').textContent=euro(dv);
+    if(dv<-0.005){
+      deckBox.classList.remove('zero');
+      document.getElementById('deck-title').textContent='Kasse im Minus!';
+      document.getElementById('deck-sub').textContent='Wechselgeld ersch\u00f6pft \u2013 Kasse dringend auff\u00fcllen.';
+    } else if(dv<20){
+      deckBox.classList.remove('zero');
+      document.getElementById('deck-title').textContent='Wechselgeld fast ersch\u00f6pft';
+      document.getElementById('deck-sub').textContent='Nur noch wenig Deckung f\u00fcr neue Einzahlungen.';
+    } else {
+      deckBox.classList.add('zero');
+      document.getElementById('deck-title').textContent='Wechselgeld-Deckung SHA';
+      document.getElementById('deck-sub').textContent='So viel k\u00f6nnen Kunden noch einzahlen, bevor Freigabe n\u00f6tig ist.';
+    }
+  }
 
   // Bewegungsliste
   const ml=document.getElementById('kb-moves-list');
@@ -1166,9 +1451,8 @@ function renderKassenbestand(){
   } else ml.innerHTML='';
 
   // Kasse-Stats oben
-  const transitSum=round2(Object.values(payments).filter(p=>p.status==='transit').reduce((s,p)=>s+p.total,0));
-  document.getElementById('k-transit').textContent=euro(transitSum);
   document.getElementById('k-soll').textContent=euro(soll);
+  document.getElementById('k-pending').textContent=euro(pend.total);
   document.getElementById('k-diff').textContent = ist===null?'\u2013':((ist-soll>0?'+':'')+euro(ist-soll));
 }
 
@@ -1201,20 +1485,93 @@ function refreshAll(){
 
   if(currentTab==='transfer') renderTransfer();
   if(currentTab==='kasse') renderKassenbestand();
+
+  handleFreigaben();
 }
 function scrollToIncoming(){ setFilter('transit'); document.getElementById('kasse-list').scrollIntoView({behavior:'smooth'}); }
+
+/* ===== FREIGABEN verarbeiten (beide Seiten) ===== */
+function handleFreigaben(){
+  const pending=Object.values(freigaben).filter(f=>f.status==='pending');
+
+  // --- SHA-Seite: Anfragen anzeigen ---
+  const fbox=document.getElementById('freigabe-box');
+  const flist=document.getElementById('freigabe-list');
+  if(fbox){
+    if(ROLE==='sha' && pending.length){
+      fbox.style.display='block';
+      flist.innerHTML=pending.map(f=>`
+        <div class="freigabe-item">
+          <div class="freigabe-head">
+            <div>
+              <div style="font-weight:700">${esc(f.name||'Einzahlung')}</div>
+              <div class="freigabe-sub">${esc(f.phone||'')} \u00b7 ${fmtDT(f.at)}</div>
+            </div>
+            <div class="freigabe-amt">${euro(f.amount)}</div>
+          </div>
+          <div class="freigabe-sub">Aktuelle Deckung: <b>${euro(f.deckung)}</b> \u00b7 Fehlbetrag: <b style="color:var(--o2-mag)">${euro(f.fehlbetrag)}</b></div>
+          <div class="deck-note deck-bad">Bei Freigabe geht die SHA-Kasse ins Minus. Geld muss schnellstm\u00f6glich transportiert werden.</div>
+          <div class="freigabe-actions">
+            <button class="btn btn-approve" onclick="approveFreigabe('${f.id}')">&#10003; Freigeben</button>
+            <button class="btn btn-reject" onclick="rejectFreigabe('${f.id}')">Ablehnen</button>
+          </div>
+        </div>`).join('');
+    } else { fbox.style.display='none'; }
+  }
+
+  // --- Backnang-Seite: auf Entscheidung der eigenen Anfrage reagieren ---
+  if(myFreigabeId){
+    const mine=freigaben[myFreigabeId];
+    if(mine){
+      if(mine.status==='approved' && pendingSubmitRec){
+        const rec={...pendingSubmitRec, freigabe:true, freigabeBy:mine.by||'SHA'};
+        pendingSubmitRec=null; const fid=myFreigabeId; myFreigabeId=null;
+        document.getElementById('wait-overlay').classList.remove('show');
+        finalizePayment(rec);
+        toast('Freigabe erteilt \u2013 Zahlung verbucht',"ok");
+      } else if(mine.status==='rejected'){
+        pendingSubmitRec=null; myFreigabeId=null;
+        document.getElementById('wait-overlay').classList.remove('show');
+        toast('Einzahlung von SHA abgelehnt',"bad");
+      }
+    }
+  }
+
+  // Badge am Kasse-Tab um Freigaben erweitern
+  const bk=document.getElementById('badge-kasse');
+  if(bk){
+    const transit=Object.values(payments).filter(p=>p.status==='transit').length;
+    const cnt=transit+pending.length;
+    bk.textContent=cnt; bk.classList.toggle('show',cnt>0);
+  }
+}
+
+/* SHA gibt frei / lehnt ab */
+function approveFreigabe(id){
+  updateFreigabe(id,{status:'approved',by:'SHA',decidedAt:Date.now()});
+  toast('Einzahlung freigegeben',"ok");
+}
+function rejectFreigabe(id){
+  updateFreigabe(id,{status:'rejected',by:'SHA',decidedAt:Date.now()});
+  toast('Einzahlung abgelehnt');
+}
 
 /* ===== INIT ===== */
 positions=[{type:"Handyvertrag",kundennr:"",amount:""}]; renderPositions();
 applyAdminUI();
+// Rolle bestimmen: URL-Parameter > gespeichert > Auswahlseite
+ROLE = getRoleFromURL() || localStorage.getItem('hetec_role') || null;
 if(useFirebase){
   db.ref('payments').on('value',s=>{ payments=s.val()||{}; refreshAll(); if(currentTab==='kasse') renderKasse(); });
-  db.ref('moves').on('value',s=>{ moves=s.val()||{}; if(currentTab==='kasse') renderKassenbestand(); });
+  db.ref('moves').on('value',s=>{ moves=s.val()||{}; refreshAll(); });
+  db.ref('freigaben').on('value',s=>{ freigaben=s.val()||{}; refreshAll(); });
 }else{
   payments=JSON.parse(localStorage.getItem('hetec_payments')||'{}');
   moves=JSON.parse(localStorage.getItem('hetec_moves')||'{}');
+  freigaben=JSON.parse(localStorage.getItem('hetec_freigaben')||'{}');
   refreshAll();
 }
+applyRole();
 </script>
 </body>
 </html>
