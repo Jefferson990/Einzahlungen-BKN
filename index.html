@@ -543,7 +543,7 @@
         <div class="kb-cell">
           <label>Grundbestand / Wechselgeld <span id="kb-lock" style="font-weight:500">&#128274;</span></label>
           <div class="amount-wrap"><span class="eur">&euro;</span>
-            <input id="kb-start" type="number" inputmode="decimal" step="0.01" min="0" placeholder="z. B. 300,00" disabled oninput="renderKassenbestand()"></div>
+            <input id="kb-start" type="number" inputmode="decimal" step="0.01" min="0" placeholder="z. B. 300,00" disabled oninput="saveStart()"></div>
         </div>
         <div class="kb-cell">
           <label>+ Einzahlungen (erfasst)</label>
@@ -564,7 +564,7 @@
         <div class="kb-cell">
           <label>Ist-Bestand (gez&auml;hlt)</label>
           <div class="amount-wrap"><span class="eur">&euro;</span>
-            <input id="kb-ist" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0,00" oninput="renderKassenbestand()"></div>
+            <input id="kb-ist" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0,00" oninput="saveKasse({ist:this.value})"></div>
         </div>
       </div>
       <div class="kb-diff ok" id="kb-diff"><span id="kb-diff-label">Differenz</span><span class="d" id="kb-diff-val">0,00 &euro;</span></div>
@@ -703,12 +703,15 @@
 <div class="toast" id="toast"></div>
 
 <script>
-/* ===== FIREBASE ===== ersetze durch deine Config; sonst lokaler Demo-Modus ===== */
+/* ===== FIREBASE ===== HeTec Rechnungseinzahlungen BKN ===== */
 const firebaseConfig = {
-  apiKey: "DEIN_API_KEY",
-  authDomain: "DEIN_PROJEKT.firebaseapp.com",
-  databaseURL: "https://DEIN_PROJEKT-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "DEIN_PROJEKT"
+  apiKey: "AIzaSyB-3mFQIXyiUv-OYBWa9xGWrIRB10bHkPc",
+  authDomain: "rechnungseinzahlungen-bkn.firebaseapp.com",
+  databaseURL: "https://rechnungseinzahlungen-bkn-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "rechnungseinzahlungen-bkn",
+  storageBucket: "rechnungseinzahlungen-bkn.firebasestorage.app",
+  messagingSenderId: "966403707184",
+  appId: "1:966403707184:web:236d3d7618c820efe438f5"
 };
 let db=null, useFirebase=false;
 try{
@@ -728,6 +731,7 @@ const TYPES = ["Handyvertrag","My Handy","DSL","Sonstiges"];
 let payments={};      // {id:{...}}
 let moves={};         // Kassenbewegungen {id:{type:'einlage'|'entnahme', amount, note, at}}
 let freigaben={};     // Freigabe-Anfragen {id:{amount, at, status:'pending'|'approved'|'rejected', by}}
+let kasse={start:'', ist:''};  // Grundbestand & Ist-Bestand (geteilt über Firebase)
 let positions=[];
 let filter="bn", currentTab="erfassen", isAdmin=false;
 let bestandskunde=null;   // 'ja' | 'nein' | null
@@ -956,7 +960,7 @@ function persistLocal(){
 
 /* ===== WECHSELGELD-DECKUNG & FREIGABE ===== */
 /* Deckung = Grundbestand - noch nicht abtransportiertes Geld (bn + transit) */
-function grundbestand(){ return round2(parseFloat(localStorage.getItem('hetec_kbstart'))||0); }
+function grundbestand(){ return round2(parseFloat(kasse.start)||0); }
 function nichtAbtransportiert(){
   return round2(Object.values(payments)
     .filter(p=>p.status==='bn'||p.status==='transit')
@@ -1146,11 +1150,17 @@ function deletePayment(id){
   toast('Beleg gel\u00f6scht');
 }
 
-/* Kassenanfang ändern (Admin) */
+/* Grundbestand ändern (Admin) – geteilt über Firebase */
 function saveStart(){
   const v=document.getElementById('kb-start').value;
-  localStorage.setItem('hetec_kbstart',v||'');
+  saveKasse({start:v||''});
+}
+function saveKasse(upd){
+  Object.assign(kasse,upd);
+  if(useFirebase) db.ref('kasse').update(upd);
+  else{ localStorage.setItem('hetec_kasse',JSON.stringify(kasse)); }
   renderKassenbestand();
+  refreshAll();
 }
 
 /* ===== Beleg: o2 A4-Rechnung (originalgetreu nachgebaut) ===== */
@@ -1388,13 +1398,17 @@ function pendingCash(){
 
 function renderKassenbestand(){
   const startEl=document.getElementById('kb-start'); if(!startEl) return;
+  const istEl=document.getElementById('kb-ist');
   if(startEl.dataset.init!=='1'){
-    const s=localStorage.getItem('hetec_kbstart'); if(s!=null) startEl.value=s;
-    const savedIst=localStorage.getItem('hetec_kbist'); if(savedIst!=null) document.getElementById('kb-ist').value=savedIst;
     startEl.dataset.init='1';
     startEl.addEventListener('change',saveStart);
+    istEl.addEventListener('change',()=>saveKasse({ist:istEl.value||''}));
   }
-  const start=round2(parseFloat(startEl.value)||0);   // Grundbestand/Wechselgeld
+  // Werte aus geteiltem State übernehmen (außer während des Tippens)
+  if(document.activeElement!==startEl) startEl.value = kasse.start||'';
+  if(document.activeElement!==istEl)   istEl.value   = kasse.ist||'';
+
+  const start=grundbestand();                          // Grundbestand/Wechselgeld
   const erfasst=erfasstSum();                          // alle Einzahlungen ab Erfassung
   const mv=movesSum();
   const soll=round2(start+erfasst+mv);
@@ -1407,9 +1421,7 @@ function renderKassenbestand(){
   document.getElementById('kb-moves-count').textContent=mvCount+(mvCount===1?' Bewegung':' Bewegungen');
   document.getElementById('kb-soll').textContent=euro(soll);
 
-  const istEl=document.getElementById('kb-ist');
   const ist=istEl.value===''?null:round2(parseFloat(istEl.value)||0);
-  localStorage.setItem('hetec_kbist',istEl.value);
   const diffEl=document.getElementById('kb-diff'), label=document.getElementById('kb-diff-label'), val=document.getElementById('kb-diff-val');
 
   // Pending: Bargeld noch nicht physisch in SHA
@@ -1692,10 +1704,12 @@ if(useFirebase){
   db.ref('payments').on('value',s=>{ payments=s.val()||{}; refreshAll(); if(currentTab==='kasse') renderKasse(); });
   db.ref('moves').on('value',s=>{ moves=s.val()||{}; refreshAll(); });
   db.ref('freigaben').on('value',s=>{ freigaben=s.val()||{}; refreshAll(); });
+  db.ref('kasse').on('value',s=>{ kasse=s.val()||{start:'',ist:''}; refreshAll(); if(currentTab==='kasse') renderKassenbestand(); });
 }else{
   payments=JSON.parse(localStorage.getItem('hetec_payments')||'{}');
   moves=JSON.parse(localStorage.getItem('hetec_moves')||'{}');
   freigaben=JSON.parse(localStorage.getItem('hetec_freigaben')||'{}');
+  kasse=JSON.parse(localStorage.getItem('hetec_kasse')||'{"start":"","ist":""}');
   refreshAll();
 }
 applyRole();
