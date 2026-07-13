@@ -372,7 +372,7 @@
   <div class="wait-card">
     <div class="wi">&#9203;</div>
     <h2>Warte auf Freigabe aus Schw&auml;bisch Hall</h2>
-    <p>Das Wechselgeld in SHA reicht f&uuml;r diese Einzahlung nicht aus.</p>
+    <p>Die SHA-Kasse hat nicht mehr genug Bargeld &ndash; sie w&uuml;rde durch diese Einzahlung ins <b>Minus</b> gehen.</p>
     <div class="wait-amt" id="wait-amt">0,00 &euro;</div>
     <p>Schw&auml;bisch Hall wurde benachrichtigt und muss die Einzahlung freigeben.</p>
     <div class="spinner"></div>
@@ -404,6 +404,9 @@
       Kasse<span class="sub">Schw&auml;bisch Hall</span>
       <span class="tab-badge" id="badge-kasse">0</span>
     </button>
+    <button class="tab" id="tab-belege" onclick="switchTab('belege')">
+      Belege<span class="sub">Archiv &amp; Verlauf</span>
+    </button>
   </div>
 
   <!-- ============ ERFASSEN ============ -->
@@ -415,7 +418,7 @@
     </div>
     <div class="card">
       <h2>Barzahlung erfassen</h2>
-      <p class="lead">Kunde zahlt eine oder mehrere o2-Rechnungen bar. Pro Beleg 3&nbsp;&euro; Bearbeitungsgeb&uuml;hr. Bis zu 10 Einzahlungen pro Beleg m&ouml;glich.</p>
+      <p class="lead">Kunde zahlt eine oder mehrere o2-Rechnungen bar. <b>3&nbsp;&euro; Bearbeitungsgeb&uuml;hr pro Einzahlung</b> (z.&nbsp;B. 10 Einzahlungen = 30&nbsp;&euro;). Bis zu 10 Einzahlungen pro Beleg m&ouml;glich.</p>
       <div class="banner info">
         <span>&#9432;</span>
         <span>Bei mehreren Einzahlungen bitte die jeweilige Kundennummer eintragen (Handyvertrag, My Handy und DSL haben unterschiedliche Kundennummern).</span>
@@ -607,6 +610,31 @@
     </div>
     <div id="kasse-list"></div>
   </div>
+
+  <!-- ============ BELEGE / ARCHIV ============ -->
+  <div id="view-belege" style="display:none">
+    <div class="stats">
+      <div class="stat"><div class="n" id="a-count">0</div><div class="l">Belege gesamt</div></div>
+      <div class="stat"><div class="n" id="a-sum">0,00 &euro;</div><div class="l">Summe Einzahlungen</div></div>
+      <div class="stat mag"><div class="n" id="a-fees">0,00 &euro;</div><div class="l">Geb&uuml;hren gesamt</div></div>
+    </div>
+
+    <div class="toolbar">
+      <input id="a-search" type="text" placeholder="Suche Name, Rufnummer, Kundennr. oder Beleg-Nr.&hellip;" oninput="renderBelege()">
+      <div class="filter">
+        <button class="chip active" id="achip-all" onclick="setArchivFilter('all')">Alle</button>
+        <button class="chip" id="achip-today" onclick="setArchivFilter('today')">Heute</button>
+        <button class="chip" id="achip-moves" onclick="setArchivFilter('moves')">Kassenbewegungen</button>
+      </div>
+    </div>
+
+    <div class="banner info">
+      <span>&#128196;</span>
+      <span>Vollst&auml;ndiger Verlauf: alle Belege und Kassenbewegungen (Ein-/Ausbuchungen). Jeder Beleg kann jederzeit erneut ge&ouml;ffnet und gedruckt werden.</span>
+    </div>
+
+    <div id="belege-list"></div>
+  </div>
 </div>
 
 <!-- Receipt modal -->
@@ -691,7 +719,7 @@ try{
 
 /* ===== KONFIG ===== */
 const ADMIN_PW = "hetec2026";   // <-- Admin-Passwort hier ändern
-const FEE = 3.00;
+const FEE = 3.00;   // Bearbeitungsgebühr PRO Einzahlung (3 Einzahlungen = 9 €)
 const MAX_POS = 10;
 const TYPES = ["Handyvertrag","My Handy","DSL","Sonstiges"];
 
@@ -776,15 +804,16 @@ function applyRole(){
     switchTab('kasse');
   }
 }
-
 function switchTab(t){
   currentTab=t;
-  ['erfassen','transfer','kasse'].forEach(x=>{
-    document.getElementById('tab-'+x).classList.toggle('active',x===t);
-    document.getElementById('view-'+x).style.display = x===t?'block':'none';
+  ['erfassen','transfer','kasse','belege'].forEach(x=>{
+    const tb=document.getElementById('tab-'+x), vw=document.getElementById('view-'+x);
+    if(tb) tb.classList.toggle('active',x===t);
+    if(vw) vw.style.display = x===t?'block':'none';
   });
   if(t==='transfer') renderTransfer();
   if(t==='kasse') renderKasse();
+  if(t==='belege') renderBelege();
   refreshAll();
 }
 
@@ -823,11 +852,13 @@ function renderPositions(){
   renderSummary();
 }
 function posSum(){ return positions.reduce((s,p)=>s+(parseFloat(p.amount)||0),0); }
+function feeTotal(){ return round2(FEE*positions.length); }
 function renderSummary(){
-  const sum=posSum(), total=sum+FEE;
+  const sum=posSum(), fees=feeTotal(), total=round2(sum+fees);
+  const n=positions.length;
   document.getElementById('summary').innerHTML=`
-    <div class="sline"><span>Rechnungen (${positions.length} ${positions.length===1?'Einzahlung':'Einzahlungen'})</span><span class="v">${euro(sum)}</span></div>
-    <div class="sline"><span>Bearbeitungsgeb&uuml;hr</span><span class="v">${euro(FEE)}</span></div>
+    <div class="sline"><span>Rechnungen (${n} ${n===1?'Einzahlung':'Einzahlungen'})</span><span class="v">${euro(sum)}</span></div>
+    <div class="sline"><span>Bearbeitungsgeb&uuml;hr (${n} &times; ${euro(FEE)})</span><span class="v">${euro(fees)}</span></div>
     <div class="stotal"><span class="k">Kunde zahlt bar</span><span class="v">${euro(total)}</span></div>`;
 }
 
@@ -861,7 +892,8 @@ function submitPayment(){
     id, belegNr, name, dob, phone, agent, shop:'Backnang',
     bestandskunde, ownerConfirmed:true,
     positions: positions.map(p=>({type:p.type, kundennr:p.kundennr.trim(), amount:round2(parseFloat(p.amount))})),
-    fee:FEE, rechnungenSum:round2(posSum()), total:round2(posSum()+FEE),
+    fee:feeTotal(), feePerPos:FEE, feeCount:positions.length,
+    rechnungenSum:round2(posSum()), total:round2(posSum()+feeTotal()),
     createdAt:Date.now(), status:'bn',
     transferId:null, transferAt:null, arrivedAt:null,
     freigabe:false
@@ -1160,14 +1192,16 @@ function showReceipt(rec){
       </tr>`;
   }).join('');
 
+  const feeQty = rec.feeCount || rec.positions.length;
+  const feeUnit = rec.feePerPos || 3.00;
   const feeRow = `
     <tr class="main rowline">
       <td>${rec.positions.length+1}</td>
       <td>109200070300*</td>
       <td>EINZAHLUNGSGEBUEHR</td>
-      <td class="c">1</td>
+      <td class="c">${feeQty}</td>
       <td class="c">STK</td>
-      <td class="r">${euro(rec.fee)}</td>
+      <td class="r">${euro(feeUnit)}</td>
       <td class="r">19% MwSt</td>
       <td class="r">${euro(rec.fee)}</td>
     </tr>`;
@@ -1327,7 +1361,7 @@ function renderKasse(){
         <span class="status ${cls}"><span class="dot"></span>${lbl}</span></div>
       <div class="txn-meta">Geb.-Datum ${fmtDate(p.dob)}${p.agent?' \u00b7 Kassierer BN: '+esc(p.agent):''}${p.bestandskunde==='nein'?' \u00b7 <span class="flag-warn">&#9888; nicht im System</span>':''}</div>
       <div class="txn-poslist">${posRows}
-        <div class="txn-posrow" style="color:var(--grey)"><div>Bearbeitungsgeb&uuml;hr</div><div class="pv" style="color:var(--grey)">${euro(p.fee)}</div></div></div>
+        <div class="txn-posrow" style="color:var(--grey)"><div>Bearbeitungsgeb&uuml;hr (${p.feeCount||p.positions.length} &times; ${euro(p.feePerPos||3)})</div><div class="pv" style="color:var(--grey)">${euro(p.fee)}</div></div></div>
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div style="font-size:12px;color:var(--grey);font-weight:600">GESAMT BAR</div><div class="txn-amt">${euro(p.total)}</div></div>
       <div class="txn-actions">${action}
@@ -1456,6 +1490,98 @@ function renderKassenbestand(){
   document.getElementById('k-diff').textContent = ist===null?'\u2013':((ist-soll>0?'+':'')+euro(ist-soll));
 }
 
+/* ===== BELEGE / ARCHIV ===== */
+let archivFilter='all';
+function setArchivFilter(f){
+  archivFilter=f;
+  ['all','today','moves'].forEach(x=>document.getElementById('achip-'+x).classList.toggle('active',x===f));
+  renderBelege();
+}
+function renderBelege(){
+  const list=document.getElementById('belege-list');
+  if(!list) return;
+  const q=(document.getElementById('a-search')?.value||'').toLowerCase().trim();
+  const today=new Date(); today.setHours(0,0,0,0);
+
+  // Statistik
+  const all=Object.values(payments);
+  const sumEin=round2(all.reduce((s,p)=>s+(p.rechnungenSum||0),0));
+  const sumFee=round2(all.reduce((s,p)=>s+(p.fee||0),0));
+  document.getElementById('a-count').textContent=all.length;
+  document.getElementById('a-sum').textContent=euro(sumEin);
+  document.getElementById('a-fees').textContent=euro(sumFee);
+
+  // Einträge zusammenstellen: Belege + Kassenbewegungen
+  let items=[];
+  if(archivFilter!=='moves'){
+    all.forEach(p=>items.push({kind:'beleg',at:p.createdAt,data:p}));
+  }
+  if(archivFilter==='all'||archivFilter==='moves'||archivFilter==='today'){
+    Object.values(moves).forEach(m=>items.push({kind:'move',at:m.at,data:m}));
+  }
+  if(archivFilter==='today') items=items.filter(i=>i.at>=today.getTime());
+  if(q){
+    items=items.filter(i=>{
+      if(i.kind==='move') return (i.data.note||'').toLowerCase().includes(q);
+      const p=i.data;
+      return (p.name||'').toLowerCase().includes(q)
+        || (p.phone||'').toLowerCase().includes(q)
+        || (p.belegNr||'').toLowerCase().includes(q)
+        || (p.positions||[]).some(x=>(x.kundennr||'').toLowerCase().includes(q));
+    });
+  }
+  items.sort((a,b)=>b.at-a.at);
+
+  if(!items.length){
+    list.innerHTML='<div class="empty"><div class="ico">&#128196;</div>Keine Eintr\u00e4ge gefunden.</div>';
+    return;
+  }
+
+  list.innerHTML=items.map(i=>{
+    if(i.kind==='move'){
+      const m=i.data;
+      return `<div class="txn" style="border-left:4px solid ${m.type==='einlage'?'var(--ok)':'var(--o2-mag)'}">
+        <div class="txn-head">
+          <div>
+            <div class="txn-name">${m.type==='einlage'?'Geld eingezahlt (Einlage)':'Geld ausgebucht (Entnahme)'}</div>
+            <div class="txn-meta">${fmtDT(m.at)} \u00b7 ${esc(m.note)}</div>
+          </div>
+          <div class="txn-amt" style="color:${m.type==='einlage'?'var(--ok)':'var(--o2-mag)'}">
+            ${m.type==='einlage'?'+':'\u2212'}${euro(m.amount)}
+          </div>
+        </div>
+      </div>`;
+    }
+    const p=i.data;
+    const [cls,lbl]=statusMeta(p.status);
+    const posLines=(p.positions||[]).map((x,n)=>
+      `<div class="txn-posrow"><div><span class="pk">${n+1}. ${esc(x.type)}</span>${x.kundennr?`<div class="psub">Kundennr.: ${esc(x.kundennr)}</div>`:''}</div>
+       <div class="pv">${euro(x.amount)}</div></div>`).join('');
+    return `<div class="txn">
+      <div class="txn-head">
+        <div>
+          <div class="txn-name">${esc(p.name)}</div>
+          <div class="txn-meta">Beleg ${esc(p.belegNr)} \u00b7 ${fmtDT(p.createdAt)} \u00b7 ${esc(p.phone)}</div>
+        </div>
+        <span class="status ${cls}"><span class="dot"></span>${lbl}</span>
+      </div>
+      <div class="txn-meta">Geb.-Datum ${fmtDate(p.dob)}${p.agent?' \u00b7 Kassierer: '+esc(p.agent):''}${p.freigabe?' \u00b7 <b style="color:var(--o2-mag)">mit SHA-Freigabe</b>':''}${p.bestandskunde==='nein'?' \u00b7 <span class="flag-warn">&#9888; nicht im System</span>':''}</div>
+      <div class="txn-poslist">${posLines}
+        <div class="txn-posrow" style="color:var(--grey)"><div>Bearbeitungsgeb&uuml;hr (${p.feeCount||p.positions.length} &times; ${euro(p.feePerPos||3)})</div>
+        <div class="pv" style="color:var(--grey)">${euro(p.fee)}</div></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:12px;color:var(--grey);font-weight:600">GESAMT BAR</div>
+        <div class="txn-amt">${euro(p.total)}</div>
+      </div>
+      <div class="txn-actions">
+        <button class="btn btn-blue" onclick='showReceipt(${JSON.stringify(p).replace(/'/g,"&#39;")})'>&#128196; Beleg &ouml;ffnen / drucken</button>
+        ${isAdmin?`<button class="btn btn-danger" style="flex:0 0 auto;padding:11px 14px" onclick="deletePayment('${p.id}')">L\u00f6schen</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
 /* ===== Badges + Alerts + Stats übergreifend ===== */
 function refreshAll(){
   const openSum=bnOpenSum(), openCount=bnOpen().length;
@@ -1485,6 +1611,7 @@ function refreshAll(){
 
   if(currentTab==='transfer') renderTransfer();
   if(currentTab==='kasse') renderKassenbestand();
+  if(currentTab==='belege') renderBelege();
 
   handleFreigaben();
 }
