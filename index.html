@@ -25,6 +25,22 @@
   header{background:linear-gradient(135deg,var(--o2-blue) 0%,var(--o2-blue-dark) 100%);color:#fff;
     padding:18px 16px;position:sticky;top:0;z-index:50;box-shadow:0 4px 18px rgba(0,25,165,.18)}
   .header-inner{max-width:920px;margin:0 auto;display:flex;align-items:center;gap:14px}
+  .header-txt{min-width:0}
+
+  /* Taschen-Anzeige oben rechts */
+  .hdr-bag{margin-left:auto;background:rgba(255,255,255,.14);border:1.5px solid rgba(255,255,255,.3);
+    border-radius:12px;padding:8px 14px;text-align:right;min-width:150px;flex-shrink:0}
+  .hdr-bag.low{background:rgba(255,193,7,.25);border-color:#ffc107}
+  .hdr-bag.empty{background:rgba(228,0,126,.35);border-color:#ff5fb0}
+  .hdr-bag-label{font-size:10.5px;font-weight:700;opacity:.85;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
+  .hdr-bag-amt{font-size:24px;font-weight:800;line-height:1.15;white-space:nowrap}
+  .hdr-bag-sub{font-size:10.5px;opacity:.85;font-weight:600;white-space:nowrap}
+  @media(max-width:640px){
+    .header-inner{flex-wrap:wrap}
+    .hdr-bag{width:100%;margin-left:0;text-align:center;order:3;min-width:0}
+    .hdr-bag-amt{font-size:22px}
+    #switch-role-btn{order:2;margin-left:auto}
+  }
   .logo{width:46px;height:46px;border-radius:12px;background:#fff;color:var(--o2-blue);
     display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;flex-shrink:0}
   .htitle{font-size:19px;font-weight:700;line-height:1.1}
@@ -220,6 +236,38 @@
   .kb-diff .d{font-size:22px;font-weight:800}
   .kb-note{font-size:12px;color:var(--grey);margin-top:8px}
   .moves-list{margin-top:12px}
+  .export-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+  .export-note{font-size:12px;color:var(--grey);margin-left:auto}
+
+  /* Schwarze Tasche / Backnang Kacheln */
+  .bag-row{display:flex;gap:14px;margin-bottom:12px}
+  @media(max-width:600px){.bag-row{flex-direction:column}}
+  .bag-card{flex:1;background:#fff;border:2px solid var(--line);border-radius:16px;padding:20px;text-align:center}
+  .bag-card .bag-ico{font-size:30px;line-height:1;margin-bottom:6px}
+  .bag-card .bag-label{font-size:12.5px;font-weight:700;color:var(--grey);text-transform:uppercase;letter-spacing:.3px}
+  .bag-card .bag-amt{font-size:34px;font-weight:800;color:var(--ok);margin:6px 0 2px;line-height:1.1}
+  .bag-card .bag-sub{font-size:12px;color:var(--grey)}
+  .bag-card.low{border-color:var(--amber);background:var(--amber-bg)}
+  .bag-card.low .bag-amt{color:var(--amber)}
+  .bag-card.empty{border-color:var(--o2-mag);background:#fff5fb}
+  .bag-card.empty .bag-amt{color:var(--o2-mag)}
+  .bag-card.bn{border-color:var(--line)}
+  .bag-card.bn .bag-amt{color:var(--o2-blue)}
+  .bag-card.bn.has{border-color:var(--o2-blue);background:#f7f8ff}
+  .bag-card.todo .bag-amt{color:var(--grey)}
+  .bag-card.todo.has{border-color:var(--o2-mag);background:#fff5fb}
+  .bag-card.todo.has .bag-amt{color:var(--o2-mag)}
+
+  .check-row{display:flex;justify-content:space-between;align-items:center;background:#f0f2fd;
+    border-radius:12px;padding:12px 16px;font-size:13px;color:var(--grey);font-weight:600;margin-bottom:16px}
+  .check-row b{font-size:16px;color:var(--o2-blue)}
+  .check-row.bad{background:#fdeaf4;color:var(--o2-mag)}
+  .check-row.bad b{color:var(--o2-mag)}
+
+  .eingang-item{border:1.5px solid var(--amber);background:var(--amber-bg);border-radius:12px;padding:14px;margin-bottom:10px}
+  .eingang-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+  .eingang-amt{font-size:22px;font-weight:800;color:var(--amber)}
+  .eingang-sub{font-size:12.5px;color:var(--grey)}
 
   .pending-box{margin-top:14px;border:1.5px solid var(--amber);background:var(--amber-bg);border-radius:12px;padding:14px 16px}
   .pending-box.zero{border-color:var(--ok);background:var(--ok-bg)}
@@ -284,8 +332,16 @@
   .toast.bad{background:var(--o2-mag)}
   .modal-bg{position:fixed;inset:0;background:rgba(15,15,40,.55);display:none;align-items:center;justify-content:center;z-index:150;padding:16px}
   .modal-bg.show{display:flex}
-  .modal{background:#fff;border-radius:18px;max-width:480px;width:100%;max-height:92vh;overflow:auto}
-  .modal.invoice{max-width:850px}
+  .modal{background:#fff;border-radius:18px;max-width:480px;width:100%;max-height:92vh;overflow:auto;position:relative}
+  /* Beleg-Fenster: Inhalt scrollt, Knöpfe bleiben immer sichtbar */
+  .modal.invoice{max-width:850px;display:flex;flex-direction:column;overflow:hidden}
+  .modal.invoice #receipt-content{flex:1;overflow:auto;-webkit-overflow-scrolling:touch}
+  .modal.invoice .modal-actions{flex:0 0 auto;border-top:1px solid var(--line);background:#fff;
+    padding:14px 20px;position:sticky;bottom:0}
+  .modal-x{position:absolute;top:10px;right:12px;z-index:20;width:38px;height:38px;border-radius:50%;
+    border:none;background:#fff;box-shadow:0 2px 10px rgba(20,20,60,.25);color:var(--ink);font-size:22px;line-height:1;
+    cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center}
+  .modal-x:hover{background:#f0f0f6}
   .modal-pad{padding:24px}
   .modal-pad h2{margin:0 0 6px;font-size:20px}
   .modal-actions{display:flex;gap:10px;padding:0 24px 24px}
@@ -338,10 +394,13 @@
     animation:spin 0.9s linear infinite;margin:14px auto 0}
   @keyframes spin{to{transform:rotate(360deg)}}
 
+  @media print{
+    /* Alles ausblenden ... */
+    body > *{display:none!important}
     /* ... außer dem Beleg-Modal */
     body > #receipt-modal{display:block!important}
     #receipt-modal{position:static!important;background:none!important;padding:0!important;inset:auto!important}
-    #receipt-modal .modal-actions,#receipt-modal .no-print{display:none!important}
+    #receipt-modal .modal-actions,#receipt-modal .no-print,#receipt-modal .modal-x{display:none!important}
     .modal.invoice{max-width:100%!important;border-radius:0;box-shadow:none;max-height:none;overflow:visible}
     body{background:#fff}
     .inv{padding:0;font-size:11px}
@@ -387,7 +446,7 @@
   <div class="wait-card">
     <div class="wi">&#9203;</div>
     <h2>Warte auf Freigabe aus Schw&auml;bisch Hall</h2>
-    <p>Die SHA-Kasse hat nicht mehr genug Bargeld &ndash; sie w&uuml;rde durch diese Einzahlung ins <b>Minus</b> gehen.</p>
+    <p>In der schwarzen Tasche in Schw&auml;bisch Hall ist nicht mehr genug Geld, um diese Einzahlung auszugleichen.</p>
     <div class="wait-amt" id="wait-amt">0,00 &euro;</div>
     <p>Schw&auml;bisch Hall wurde benachrichtigt und muss die Einzahlung freigeben.</p>
     <div class="spinner"></div>
@@ -398,12 +457,19 @@
 <header>
   <div class="header-inner">
     <div class="logo">HT</div>
-    <div>
+    <div class="header-txt">
       <div class="htitle">Rechnung einzahlen</div>
       <div class="hsub" id="header-sub">HeTec &middot; Barzahlungs-Verbund</div>
     </div>
+
+    <div class="hdr-bag" id="hdr-bag" title="Geld, das in Schw&auml;bisch Hall noch zum Ausgleichen da ist">
+      <div class="hdr-bag-label" id="hdr-bag-label">&#128188; Schwarze Tasche</div>
+      <div class="hdr-bag-amt" id="hdr-bag-amt">&ndash;</div>
+      <div class="hdr-bag-sub" id="hdr-bag-sub">&nbsp;</div>
+    </div>
+
+    <button class="btn-admin ghost no-print" id="switch-role-btn" style="display:none" onclick="clearRole()">Standort wechseln</button>
   </div>
-  <button class="btn-admin ghost no-print" id="switch-role-btn" style="margin-left:auto;display:none" onclick="clearRole()">Standort wechseln</button>
 </header>
 
 <div class="wrap">
@@ -518,112 +584,128 @@
 
   <!-- ============ KASSE (SHA) ============ -->
   <div id="view-kasse" style="display:none">
+
+    <!-- Freigabe-Anfragen -->
     <div class="freigabe-box pending-shake" id="freigabe-box" style="display:none">
       <div style="font-weight:800;font-size:15px;color:var(--o2-mag);margin-bottom:4px">&#128681; Freigabe erforderlich</div>
-      <div style="font-size:12.5px;color:var(--grey);margin-bottom:12px">Backnang m&ouml;chte einzahlen, aber das Wechselgeld in SHA reicht nicht. Kasse w&uuml;rde ins Minus gehen.</div>
+      <div style="font-size:12.5px;color:var(--grey);margin-bottom:12px">In der schwarzen Tasche ist nicht mehr genug Geld f&uuml;r diese Einzahlung.</div>
       <div id="freigabe-list"></div>
     </div>
 
-    <div class="alert blue" id="alert-incoming" onclick="scrollToIncoming()">
-      <span class="ico">&#128230;</span>
-      <div class="txt"><b id="alert-incoming-text">Geld unterwegs</b><span id="alert-incoming-sub"></span></div>
-      <span class="go">Ansehen &rarr;</span>
-    </div>
-
-    <div class="stats">
-      <div class="stat green"><div class="n" id="k-soll">0,00 &euro;</div><div class="l">Soll-Bestand SHA</div></div>
-      <div class="stat amber"><div class="n" id="k-pending">0,00 &euro;</div><div class="l">Noch nicht in SHA</div></div>
-      <div class="stat"><div class="n" id="k-diff">&ndash;</div><div class="l">Differenz Ist/Soll</div></div>
-    </div>
-
-    <div class="admin-bar" id="admin-bar">
-      <div class="admin-locked" id="admin-locked">
-        <span>&#128274; Admin: Grundbestand/Wechselgeld, Beleg l&ouml;schen, Geld ein-/ausbuchen</span>
-        <button class="btn-admin" onclick="adminLogin()">Anmelden</button>
+    <!-- Die zwei Kacheln: Tasche + Backnang -->
+    <div class="bag-row">
+      <div class="bag-card" id="bag-card">
+        <div class="bag-ico">&#128188;</div>
+        <div class="bag-label">Schwarze Tasche (SHA)</div>
+        <div class="bag-amt" id="bag-amt">0,00 &euro;</div>
+        <div class="bag-sub" id="bag-sub">Geld, das noch zum Ausgleichen da ist</div>
       </div>
-      <div class="admin-unlocked" id="admin-unlocked" style="display:none">
-        <span>&#128275; Admin aktiv</span>
-        <div class="admin-actions">
-          <button class="btn-admin ghost" onclick="openCashModal('einlage')">+ Geld einzahlen</button>
-          <button class="btn-admin ghost" onclick="openCashModal('entnahme')">&minus; Geld ausbuchen</button>
-          <button class="btn-admin ghost" onclick="adminLogout()">Abmelden</button>
-        </div>
+      <div class="bag-card todo" id="todo-card">
+        <div class="bag-ico">&#129534;</div>
+        <div class="bag-label">Noch auszubuchen</div>
+        <div class="bag-amt" id="todo-amt">0,00 &euro;</div>
+        <div class="bag-sub" id="todo-sub">Belege, die noch in die o2-Kasse m&uuml;ssen</div>
+      </div>
+      <div class="bag-card bn" id="bnbox-card">
+        <div class="bag-ico">&#128179;</div>
+        <div class="bag-label">Liegt in Backnang</div>
+        <div class="bag-amt" id="bnbox-amt">0,00 &euro;</div>
+        <div class="bag-sub" id="bnbox-sub">Bargeld, das noch nach SHA muss</div>
       </div>
     </div>
 
-    <div class="card" style="margin-bottom:16px">
-      <h2 style="font-size:17px">Kassenbestand Schw&auml;bisch Hall</h2>
-      <p class="lead" style="margin-bottom:14px">Buchhalterisch sitzt die Kasse in SHA. Jede in Backnang erfasste Einzahlung z&auml;hlt <b>sofort</b> zum SHA-Soll &ndash; auch wenn das Bargeld noch nicht physisch da ist.</p>
-      <div class="kb-grid">
-        <div class="kb-cell">
-          <label>Grundbestand / Wechselgeld <span id="kb-lock" style="font-weight:500">&#128274;</span></label>
-          <div class="amount-wrap"><span class="eur">&euro;</span>
-            <input id="kb-start" type="number" inputmode="decimal" step="0.01" min="0" placeholder="z. B. 300,00" disabled oninput="saveStart()"></div>
-        </div>
-        <div class="kb-cell">
-          <label>+ Einzahlungen (erfasst)</label>
-          <div class="big" id="kb-income">0,00 &euro;</div>
-          <div class="kb-note" id="kb-income-count">0 Belege</div>
-        </div>
-        <div class="kb-cell">
-          <label>&plusmn; Bewegungen</label>
-          <div class="big" id="kb-moves">0,00 &euro;</div>
-          <div class="kb-note" id="kb-moves-count">0 Bewegungen</div>
-        </div>
-      </div>
-      <div class="kb-grid" style="margin-top:12px;grid-template-columns:1fr 1fr">
-        <div class="kb-cell" style="background:#f0f2fd;border-color:#d3d7ef">
-          <label>= Soll-Bestand SHA</label>
-          <div class="big" id="kb-soll">0,00 &euro;</div>
-        </div>
-        <div class="kb-cell">
-          <label>Ist-Bestand (gez&auml;hlt)</label>
-          <div class="amount-wrap"><span class="eur">&euro;</span>
-            <input id="kb-ist" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0,00" oninput="saveKasse({ist:this.value})"></div>
-        </div>
-      </div>
-      <div class="kb-diff ok" id="kb-diff"><span id="kb-diff-label">Differenz</span><span class="d" id="kb-diff-val">0,00 &euro;</span></div>
+    <div class="check-row" id="check-row">
+      <span id="check-text">Kontrolle: Tasche + Backnang = Ausgangsbetrag</span>
+      <b id="check-val">0,00 &euro;</b>
+    </div>
 
-      <div class="pending-box" id="pending-box">
-        <div class="pending-head">
-          <span class="pico">&#128184;</span>
-          <div>
-            <div class="pending-title" id="pending-title">Noch nicht physisch in SHA</div>
-            <div class="pending-sub" id="pending-sub">Dieses Bargeld liegt noch in Backnang oder ist unterwegs.</div>
+    <!-- Belege ausbuchen (Hauptaufgabe SHA) -->
+    <div class="card" id="ausbuch-card" style="display:none">
+      <h2 style="font-size:18px">&#129534; Belege ausbuchen</h2>
+      <p class="lead">Diese Belege hat Backnang erstellt. Jetzt in der o2-Kasse einzahlen und hier ausbuchen &ndash; das Geld wird der schwarzen Tasche entnommen.</p>
+      <div id="ausbuch-list"></div>
+    </div>
+
+    <!-- Geldeingang bestätigen -->
+    <div class="card" id="eingang-card" style="display:none">
+      <h2 style="font-size:18px">&#128230; Geld aus Backnang angekommen?</h2>
+      <p class="lead">Bargeld z&auml;hlen und best&auml;tigen. Danach wandert es zur&uuml;ck in die schwarze Tasche.</p>
+      <div id="eingang-list"></div>
+    </div>
+
+    <!-- Startbetrag setzen (nur wenn noch nicht gesetzt) -->
+    <div class="card" id="start-card" style="display:none">
+      <h2 style="font-size:18px">Startbetrag der Tasche</h2>
+      <p class="lead">Wie viel Geld liegt aktuell in der schwarzen Tasche? Einmal eintragen.</p>
+      <div class="amount-wrap" style="margin-bottom:12px"><span class="eur">&euro;</span>
+        <input id="bag-start" type="number" inputmode="decimal" step="0.01" min="0" placeholder="z. B. 300,00"></div>
+      <button class="btn btn-primary" onclick="setBagStart()">Startbetrag speichern</button>
+    </div>
+
+    <!-- Letzte Belege -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <h2 style="font-size:18px;margin:0">Letzte Einzahlungen</h2>
+        <button class="btn-admin" style="background:#eef0fa;color:var(--o2-blue)" onclick="switchTab('belege')">Alle Belege &rarr;</button>
+      </div>
+      <p class="lead">Was Backnang heute verbucht hat.</p>
+      <div id="sha-recent"></div>
+    </div>
+
+    <div style="text-align:center;margin-top:6px">
+      <button class="btn-admin" id="sha-admin-toggle" style="background:#e7e9f6;color:var(--grey)" onclick="toggleShaAdmin()">Einstellungen (Admin)</button>
+    </div>
+
+    <!-- Admin-Bereich, standardmäßig versteckt -->
+    <div id="sha-admin" style="display:none;margin-top:14px">
+      <div class="admin-bar" id="admin-bar">
+        <div class="admin-locked" id="admin-locked">
+          <span>&#128274; Admin: Startbetrag, Beleg l&ouml;schen, Geld ein-/ausbuchen</span>
+          <button class="btn-admin" onclick="adminLogin()">Anmelden</button>
+        </div>
+        <div class="admin-unlocked" id="admin-unlocked" style="display:none">
+          <span>&#128275; Admin aktiv</span>
+          <div class="admin-actions">
+            <button class="btn-admin ghost" onclick="openCashModal('einlage')">+ Geld einzahlen</button>
+            <button class="btn-admin ghost" onclick="openCashModal('entnahme')">&minus; Geld ausbuchen</button>
+            <button class="btn-admin ghost" onclick="adminLogout()">Abmelden</button>
           </div>
-          <div class="pending-amt" id="pending-amt">0,00 &euro;</div>
         </div>
-        <div class="pending-detail" id="pending-detail"></div>
       </div>
-
-      <div class="pending-box" id="deck-box" style="margin-top:12px">
-        <div class="pending-head">
-          <span class="pico">&#127974;</span>
-          <div>
-            <div class="pending-title" id="deck-title">Wechselgeld-Deckung SHA</div>
-            <div class="pending-sub" id="deck-sub">Grundbestand &minus; noch nicht abtransportiertes Geld</div>
+      <div class="card">
+        <h2 style="font-size:17px">Kassen-Details</h2>
+        <div class="kb-grid">
+          <div class="kb-cell">
+            <label>Startbetrag Tasche <span id="kb-lock" style="font-weight:500">&#128274;</span></label>
+            <div class="amount-wrap"><span class="eur">&euro;</span>
+              <input id="kb-start" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0,00" disabled oninput="saveStart()"></div>
           </div>
-          <div class="pending-amt" id="deck-amt">0,00 &euro;</div>
+          <div class="kb-cell">
+            <label>Einzahlungen erfasst</label>
+            <div class="big" id="kb-income">0,00 &euro;</div>
+            <div class="kb-note" id="kb-income-count">0 Belege</div>
+          </div>
+          <div class="kb-cell">
+            <label>&plusmn; Bewegungen</label>
+            <div class="big" id="kb-moves">0,00 &euro;</div>
+            <div class="kb-note" id="kb-moves-count">0 Bewegungen</div>
+          </div>
         </div>
-      </div>
-
-      <div class="moves-list" id="kb-moves-list"></div>
-    </div>
-
-    <div class="banner warn">
-      <span>&#9888;</span>
-      <span>Zuerst Transfer in Backnang starten. Wenn das Bargeld physisch in SHA ankommt, hier z&auml;hlen und <b>&bdquo;Geld eingegangen&ldquo;</b> best&auml;tigen &ndash; nur bei exakter &Uuml;bereinstimmung.</span>
-    </div>
-    <div class="toolbar">
-      <input id="search" type="text" placeholder="Suche Name, Rufnummer oder Kundennummer&hellip;" oninput="renderKasse()">
-      <div class="filter">
-        <button class="chip active" id="chip-bn" onclick="setFilter('bn')">In Backnang</button>
-        <button class="chip" id="chip-transit" onclick="setFilter('transit')">Unterwegs</button>
-        <button class="chip" id="chip-sha" onclick="setFilter('sha')">In SHA</button>
-        <button class="chip" id="chip-all" onclick="setFilter('all')">Alle</button>
+        <div class="kb-grid" style="margin-top:12px;grid-template-columns:1fr 1fr">
+          <div class="kb-cell" style="background:#f0f2fd;border-color:#d3d7ef">
+            <label>Soll-Tasche (Startbetrag &plusmn; Bewegungen)</label>
+            <div class="big" id="kb-soll">0,00 &euro;</div>
+          </div>
+          <div class="kb-cell">
+            <label>Ist-Bestand Tasche (gez&auml;hlt)</label>
+            <div class="amount-wrap"><span class="eur">&euro;</span>
+              <input id="kb-ist" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0,00" oninput="saveKasse({ist:this.value})"></div>
+          </div>
+        </div>
+        <div class="kb-diff ok" id="kb-diff"><span id="kb-diff-label">Differenz</span><span class="d" id="kb-diff-val">0,00 &euro;</span></div>
+        <div class="moves-list" id="kb-moves-list"></div>
       </div>
     </div>
-    <div id="kasse-list"></div>
   </div>
 
   <!-- ============ BELEGE / ARCHIV ============ -->
@@ -643,20 +725,31 @@
       </div>
     </div>
 
-    <div class="banner info">
-      <span>&#128196;</span>
-      <span>Vollst&auml;ndiger Verlauf: alle Belege und Kassenbewegungen (Ein-/Ausbuchungen). Jeder Beleg kann jederzeit erneut ge&ouml;ffnet und gedruckt werden.</span>
+    <div class="export-row">
+      <button class="btn-admin" style="background:var(--ok);color:#fff" onclick="exportCSV()">&#11015; Als Excel/CSV exportieren</button>
+      <button class="btn-admin" style="background:#eef0fa;color:var(--o2-blue)" onclick="toggleHistorie()">
+        <span id="hist-toggle-text">Verlauf einklappen</span>
+      </button>
+      <span class="export-note" id="cleanup-note"></span>
     </div>
 
-    <div id="belege-list"></div>
+    <div id="historie-wrap">
+      <div class="banner info">
+        <span>&#128196;</span>
+        <span>Alle Belege und Kassenbewegungen. Jeder Beleg kann erneut ge&ouml;ffnet und gedruckt werden.
+        Eintr&auml;ge &auml;lter als <b>32 Tage</b> werden automatisch gel&ouml;scht (vorher wird eine CSV-Sicherung heruntergeladen).</span>
+      </div>
+      <div id="belege-list"></div>
+    </div>
   </div>
 </div>
 
 <!-- Receipt modal -->
-<div class="modal-bg" id="receipt-modal">
+<div class="modal-bg" id="receipt-modal" onclick="if(event.target===this)closeModal('receipt-modal')">
   <div class="modal invoice">
+    <button class="modal-x" onclick="closeModal('receipt-modal')" title="Schlie&szlig;en">&times;</button>
     <div id="receipt-content"></div>
-    <div class="modal-actions no-print" style="padding-top:18px">
+    <div class="modal-actions no-print">
       <button class="btn btn-ghost" style="margin-top:0" onclick="closeModal('receipt-modal')">Schlie&szlig;en</button>
       <button class="btn btn-primary" onclick="window.print()">Beleg drucken</button>
     </div>
@@ -697,6 +790,7 @@
     <div class="modal-pad">
       <h2 id="cash-title">Geld einzahlen</h2>
       <p class="lead" id="cash-lead">Einlage in die Kasse.</p>
+      <div class="banner warn" style="margin-bottom:14px"><span>&#9888;</span><span>Nur f&uuml;r <b>zus&auml;tzliches</b> Geld. Den Startbetrag der Tasche hier <b>nicht</b> nochmal buchen &ndash; der ist oben schon eingetragen.</span></div>
       <div class="field">
         <label>Betrag <span class="req">*</span></label>
         <div class="amount-wrap"><span class="eur">&euro;</span>
@@ -787,6 +881,15 @@ function fmtDT(ts){ if(!ts) return "\u2013"; const d=new Date(ts); return d.toLo
 function toast(m,kind){ const t=document.getElementById('toast'); t.textContent=m; t.className='toast show'+(kind?' '+kind:''); setTimeout(()=>t.className='toast',3000); }
 function esc(s){ return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+/* ESC schließt offene Fenster */
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    ['receipt-modal','incoming-modal','cash-modal'].forEach(id=>{
+      const m=document.getElementById(id);
+      if(m && m.classList.contains('show')) m.classList.remove('show');
+    });
+  }
+});
 
 /* ===== ROLLEN / STANDORT ===== */
 function getRoleFromURL(){
@@ -799,6 +902,8 @@ function setRole(r){
   ROLE=r;
   try{ localStorage.setItem('hetec_role',r); }catch(e){}
   applyRole();
+  // Einmal beim Start aufräumen (mit CSV-Sicherung)
+  setTimeout(()=>{ try{ cleanupAlteDaten(); }catch(e){ console.warn(e); } }, 2500);
 }
 function clearRole(){
   try{ localStorage.removeItem('hetec_role'); }catch(e){}
@@ -919,7 +1024,8 @@ function submitPayment(){
     rechnungenSum:round2(posSum()), total:round2(posSum()+feeTotal()),
     createdAt:Date.now(), status:'bn',
     transferId:null, transferAt:null, arrivedAt:null,
-    freigabe:false
+    freigabe:false,
+    ausgebucht:false, ausgebuchtAt:null
   };
 
   // ===== Wechselgeld-Deckung prüfen =====
@@ -977,18 +1083,65 @@ function persistLocal(){
   localStorage.setItem('hetec_freigaben',JSON.stringify(freigaben));
 }
 
-/* ===== WECHSELGELD-DECKUNG & FREIGABE ===== */
-/* Deckung = Grundbestand - noch nicht abtransportiertes Geld (bn + transit) */
+/* ===== SCHWARZE TASCHE & FREIGABE =====
+   Beleg hat ZWEI unabhängige Zustände:
+   - ausgebucht (p.ausgebucht): SHA hat den Beleg in der o2-Kasse eingezahlt -> Geld aus der Tasche genommen
+   - status: 'bn' | 'transit' | 'sha'  (wo das PHYSISCHE Bargeld gerade liegt)
+   Tasche = Startbetrag - (ausgebuchte Belege, deren Bargeld noch NICHT in SHA ist)
+*/
 function grundbestand(){ return round2(parseFloat(kasse.start)||0); }
+
+/* Belege, die SHA ausgebucht hat, deren Geld aber noch in Backnang/unterwegs ist
+   -> genau dieses Geld fehlt aktuell in der Tasche */
+function ausgeglichenOffen(){
+  return round2(Object.values(payments)
+    .filter(p=>p.ausgebucht && p.status!=='sha')
+    .reduce((s,p)=>s+p.total,0));
+}
+/* Belege, die SHA noch NICHT ausgebucht hat */
+function offeneBelege(){ return Object.values(payments).filter(p=>!p.ausgebucht); }
+function offeneBelegeSum(){ return round2(offeneBelege().reduce((s,p)=>s+p.total,0)); }
+
+/* Bargeld, das physisch noch nicht in SHA ist (egal ob ausgebucht) */
 function nichtAbtransportiert(){
   return round2(Object.values(payments)
     .filter(p=>p.status==='bn'||p.status==='transit')
     .reduce((s,p)=>s+p.total,0));
 }
-function deckung(){ return round2(grundbestand()-nichtAbtransportiert()); }
+/* Aktueller Stand der schwarzen Tasche */
+/* Aktueller Stand der schwarzen Tasche
+   = Startbetrag - (ausgebuchte Belege, deren Geld noch nicht da ist) + Einlagen - Entnahmen */
+function deckung(){ return round2(grundbestand()-ausgeglichenOffen()+movesSum()); }
 
-/* Prüfen ob eine neue Einzahlung von 'amount' noch gedeckt ist */
-function istGedeckt(amount){ return round2(deckung()-round2(amount)) >= -0.005; }
+/* SHA bucht einen Beleg aus: in der o2-Kasse einzahlen, Geld aus der Tasche nehmen */
+function ausbuchen(id){
+  const p=payments[id]; if(!p) return;
+  if(p.ausgebucht) return;
+  const bag=deckung();
+  if(round2(bag-p.total) < -0.005){
+    if(!confirm(`Achtung: In der Tasche sind nur ${euro(bag)}.\nDieser Beleg über ${euro(p.total)} bringt die Tasche ins Minus.\n\nTrotzdem ausbuchen?`)) return;
+  }
+  const upd={ausgebucht:true, ausgebuchtAt:Date.now()};
+  if(useFirebase) db.ref('payments/'+id).update(upd);
+  else{ Object.assign(payments[id],upd); persistLocal(); refreshAll(); }
+  toast('Beleg ausgebucht \u2013 '+euro(p.total)+' aus der Tasche entnommen',"ok");
+}
+/* Rückgängig machen (Admin) */
+function ausbuchenRueckgaengig(id){
+  if(!requireAdmin()) return;
+  if(!confirm('Ausbuchung r\u00fcckg\u00e4ngig machen? Das Geld geht zur\u00fcck in die Tasche.')) return;
+  const upd={ausgebucht:false, ausgebuchtAt:null};
+  if(useFirebase) db.ref('payments/'+id).update(upd);
+  else{ Object.assign(payments[id],upd); persistLocal(); refreshAll(); }
+  toast('Ausbuchung r\u00fcckg\u00e4ngig gemacht');
+}
+
+/* Prüfen ob eine neue Einzahlung von 'amount' noch aus der Tasche gedeckt werden kann.
+   Berücksichtigt auch die Belege, die noch ausgebucht werden müssen. */
+function istGedeckt(amount){
+  const nochAuszubuchen = round2(offeneBelege().filter(p=>p.status!=='sha').reduce((s,p)=>s+p.total,0));
+  return round2(deckung()-nochAuszubuchen-round2(amount)) >= -0.005;
+}
 
 function saveFreigabe(rec){
   if(useFirebase) db.ref('freigaben/'+rec.id).set(rec);
@@ -1354,49 +1507,186 @@ function renderReviewQR(){
 }
 
 /* ===== KASSE / Belegliste ===== */
-function setFilter(f){ filter=f; ['bn','transit','sha','all'].forEach(x=>document.getElementById('chip-'+x).classList.toggle('active',x===f)); renderKasse(); }
 function getSorted(){ return Object.values(payments).sort((a,b)=>b.createdAt-a.createdAt); }
 function statusMeta(s){ return s==='bn'?['bn','In Backnang']:s==='transit'?['transit','Unterwegs']:['sha','In SHA']; }
+function setFilter(f){ /* Filter entfällt in der einfachen SHA-Ansicht */ }
+function scrollToIncoming(){ document.getElementById('eingang-card')?.scrollIntoView({behavior:'smooth'}); }
+function toggleShaAdmin(){
+  const a=document.getElementById('sha-admin');
+  const open = a.style.display==='none';
+  a.style.display = open?'block':'none';
+  document.getElementById('sha-admin-toggle').textContent = open?'Einstellungen schlie\u00dfen':'Einstellungen (Admin)';
+  if(open) renderKassenbestand();
+}
+function setBagStart(){
+  const v=document.getElementById('bag-start').value;
+  if(!v || parseFloat(v)<=0){ toast('Bitte einen Betrag eingeben',"bad"); return; }
+  saveKasse({start:v});
+  toast('Startbetrag gespeichert',"ok");
+}
 
+/* ===== SHA-Ansicht (einfach) ===== */
 function renderKasse(){
-  const list=document.getElementById('kasse-list');
-  const q=(document.getElementById('search')?.value||'').toLowerCase().trim();
-  let items=getSorted();
-  if(filter!=='all') items=items.filter(p=>p.status===filter);
-  if(q) items=items.filter(p=>{
-    const inHead=(p.name||'').toLowerCase().includes(q)||(p.phone||'').toLowerCase().includes(q);
-    const inPos=(p.positions||[]).some(x=>(x.kundennr||'').toLowerCase().includes(q));
-    return inHead||inPos;
-  });
-  renderKassenbestand();
-  if(!items.length){
-    list.innerHTML=`<div class="empty"><div class="ico">&#128179;</div>${filter==='bn'?'Kein Geld in Backnang offen.':'Keine Eintr\u00e4ge.'}</div>`;
-    return;
+  const startSet = !!(kasse.start && parseFloat(kasse.start)>0);
+
+  // Startbetrag-Karte nur zeigen, wenn noch nicht gesetzt
+  const sc=document.getElementById('start-card');
+  if(sc) sc.style.display = startSet ? 'none' : 'block';
+
+  const bag   = deckung();                 // Tasche = Startbetrag - was in Backnang/unterwegs liegt
+  const inBN  = nichtAbtransportiert();    // Bargeld, das noch nach SHA muss
+  const start = grundbestand();
+
+  // Kachel: Tasche
+  const bagCard=document.getElementById('bag-card');
+  if(bagCard){
+    document.getElementById('bag-amt').textContent=euro(bag);
+    bagCard.classList.remove('low','empty');
+    const sub=document.getElementById('bag-sub');
+    if(bag < -0.005){
+      bagCard.classList.add('empty');
+      sub.textContent='Tasche im Minus \u2013 Geld muss dringend aus Backnang kommen!';
+    } else if(bag < 50 && startSet){
+      bagCard.classList.add('low');
+      sub.textContent='Fast leer \u2013 bald Geldtransfer aus Backnang n\u00f6tig.';
+    } else {
+      sub.textContent='Geld, das noch zum Ausgleichen da ist';
+    }
   }
-  list.innerHTML=items.map(p=>{
-    const [cls,lbl]=statusMeta(p.status);
-    const posRows=(p.positions||[]).map((x,i)=>`
-      <div class="txn-posrow"><div><span class="pk">${i+1}. ${esc(x.type)}</span>${x.kundennr?`<div class="psub">Kundennr.: ${esc(x.kundennr)}</div>`:''}</div>
-      <div class="pv">${euro(x.amount)}</div></div>`).join('');
-    let action='';
-    if(p.status==='transit') action=`<button class="btn btn-blue" onclick="openIncoming('${p.transferId}')">&#128230; Geld eingegangen</button>`;
-    else if(p.status==='sha') action=`<div style="flex:1;font-size:12.5px;color:var(--grey);align-self:center">Angekommen ${fmtDT(p.arrivedAt)}</div>`;
-    else action=`<div style="flex:1;font-size:12.5px;color:var(--grey);align-self:center">Wartet auf Transfer</div>`;
-    const adminBtn=isAdmin?`<button class="btn btn-danger" style="flex:0 0 auto;padding:11px 14px" onclick="deletePayment('${p.id}')">L\u00f6schen</button>`:'';
-    return `<div class="txn ${cls==='sha'?'sha':''}">
-      <div class="txn-head"><div>
-        <div class="txn-name">${esc(p.name)}</div>
-        <div class="txn-meta">Beleg ${esc(p.belegNr)} \u00b7 ${fmtDT(p.createdAt)} \u00b7 ${esc(p.phone)}</div></div>
-        <span class="status ${cls}"><span class="dot"></span>${lbl}</span></div>
-      <div class="txn-meta">Geb.-Datum ${fmtDate(p.dob)}${p.agent?' \u00b7 Kassierer BN: '+esc(p.agent):''}${p.bestandskunde==='nein'?' \u00b7 <span class="flag-warn">&#9888; nicht im System</span>':''}</div>
-      <div class="txn-poslist">${posRows}
-        <div class="txn-posrow" style="color:var(--grey)"><div>Bearbeitungsgeb&uuml;hr (${p.feeCount||p.positions.length} &times; ${euro(p.feePerPos||3)})</div><div class="pv" style="color:var(--grey)">${euro(p.fee)}</div></div></div>
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div style="font-size:12px;color:var(--grey);font-weight:600">GESAMT BAR</div><div class="txn-amt">${euro(p.total)}</div></div>
-      <div class="txn-actions">${action}
-        <button class="btn btn-mini" onclick='showReceipt(${JSON.stringify(p).replace(/'/g,"&#39;")})'>Beleg</button>${adminBtn}</div>
-    </div>`;
-  }).join('');
+
+  // Kachel: Backnang
+  const bnCard=document.getElementById('bnbox-card');
+  if(bnCard){
+    document.getElementById('bnbox-amt').textContent=euro(inBN);
+    bnCard.classList.toggle('has', inBN>0.005);
+    document.getElementById('bnbox-sub').textContent =
+      inBN>0.005 ? 'Bargeld, das noch nach SHA muss' : 'Alles Geld ist in SHA angekommen';
+  }
+
+  // Kachel: noch auszubuchen
+  const todoCard=document.getElementById('todo-card');
+  const offen=offeneBelege();
+  const offenSum=offeneBelegeSum();
+  if(todoCard){
+    document.getElementById('todo-amt').textContent=euro(offenSum);
+    todoCard.classList.toggle('has', offen.length>0);
+    document.getElementById('todo-sub').textContent = offen.length
+      ? offen.length+' Beleg(e) in die o2-Kasse einzahlen'
+      : 'Alle Belege sind ausgebucht \u2713';
+  }
+
+  // Kontrollzeile: Tasche + entnommenes Geld = Startbetrag (+ ggf. Einlagen/Entnahmen)
+  const cr=document.getElementById('check-row');
+  if(cr){
+    const entnommen=ausgeglichenOffen();
+    const mvs=movesSum();
+    const summe=round2(bag+entnommen);
+    const ziel=round2(start+mvs);
+    document.getElementById('check-val').textContent=euro(summe);
+    const ok=Math.abs(summe-ziel)<0.005;
+    cr.classList.toggle('bad',!ok);
+    const zielText = Math.abs(mvs)<0.005
+      ? 'Startbetrag ('+euro(start)+')'
+      : 'Startbetrag ('+euro(start)+') '+(mvs>0?'+':'\u2212')+' Bewegungen ('+euro(Math.abs(mvs))+') = '+euro(ziel);
+    document.getElementById('check-text').textContent = ok
+      ? 'Kontrolle: Tasche ('+euro(bag)+') + entnommen ('+euro(entnommen)+') = '+zielText+' \u2713'
+      : 'Achtung: stimmt nicht mit '+zielText+' \u00fcberein';
+  }
+
+  // Belege ausbuchen
+  const ac=document.getElementById('ausbuch-card');
+  const al=document.getElementById('ausbuch-list');
+  if(ac && al){
+    if(offen.length){
+      ac.style.display='block';
+      al.innerHTML=offen.sort((a,b)=>a.createdAt-b.createdAt).map(p=>{
+        const posLines=(p.positions||[]).map((x,i)=>
+          `<div class="txn-posrow"><div><span class="pk">${i+1}. ${esc(x.type)}</span>${x.kundennr?`<div class="psub">Kundennr.: ${esc(x.kundennr)}</div>`:''}</div>
+           <div class="pv">${euro(x.amount)}</div></div>`).join('');
+        const reicht = round2(bag-p.total) >= -0.005;
+        return `<div class="txn" style="border-left:4px solid var(--o2-mag)">
+          <div class="txn-head">
+            <div>
+              <div class="txn-name">${esc(p.name)}</div>
+              <div class="txn-meta">Beleg ${esc(p.belegNr)} \u00b7 ${fmtDT(p.createdAt)}</div>
+            </div>
+            <div class="txn-amt">${euro(p.total)}</div>
+          </div>
+          <div class="txn-poslist">${posLines}
+            <div class="txn-posrow" style="color:var(--grey)"><div>Bearbeitungsgeb\u00fchr (${p.feeCount||p.positions.length} &times; ${euro(p.feePerPos||3)})</div>
+            <div class="pv" style="color:var(--grey)">${euro(p.fee)}</div></div>
+          </div>
+          ${!reicht?`<div class="deck-note deck-bad">&#9888; Tasche hat nur ${euro(bag)} \u2013 w\u00fcrde ins Minus gehen.</div>`:''}
+          <div class="txn-actions">
+            <button class="btn btn-primary" style="margin:0" onclick="ausbuchen('${p.id}')">&#129534; In o2-Kasse ausbuchen (${euro(p.total)})</button>
+            <button class="btn btn-mini" onclick='showReceipt(${JSON.stringify(p).replace(/'/g,"&#39;")})'>Beleg</button>
+          </div>
+        </div>`;
+      }).join('');
+    } else {
+      ac.style.display='none';
+      al.innerHTML='';
+    }
+  }
+
+  // Geldeingänge (unterwegs) – nach Transfer gruppiert
+  const ec=document.getElementById('eingang-card');
+  const el=document.getElementById('eingang-list');
+  const transit=Object.values(payments).filter(p=>p.status==='transit');
+  if(ec && el){
+    if(transit.length){
+      ec.style.display='block';
+      const groups={};
+      transit.forEach(p=>{ (groups[p.transferId]=groups[p.transferId]||[]).push(p); });
+      el.innerHTML=Object.entries(groups).map(([tid,ps])=>{
+        const sum=round2(ps.reduce((s,p)=>s+p.total,0));
+        return `<div class="eingang-item">
+          <div class="eingang-head">
+            <div>
+              <div style="font-weight:700">Geldtransfer aus Backnang</div>
+              <div class="eingang-sub">${ps.length} Beleg(e) \u00b7 gestartet ${fmtDT(ps[0].transferAt)}</div>
+            </div>
+            <div class="eingang-amt">${euro(sum)}</div>
+          </div>
+          <button class="btn btn-blue" onclick="openIncoming('${tid}')">&#10003; Geld erhalten &amp; in Tasche legen</button>
+        </div>`;
+      }).join('');
+    } else {
+      ec.style.display='none';
+      el.innerHTML='';
+    }
+  }
+
+  // Letzte Einzahlungen (kompakt, max 5)
+  const rec=document.getElementById('sha-recent');
+  if(rec){
+    const items=getSorted().slice(0,5);
+    if(!items.length){
+      rec.innerHTML='<div class="empty"><div class="ico">&#128179;</div>Noch keine Einzahlungen.</div>';
+    } else {
+      rec.innerHTML=items.map(p=>{
+        const [cls,lbl]=statusMeta(p.status);
+        return `<div class="txn" style="padding:13px">
+          <div class="txn-head" style="margin-bottom:4px">
+            <div>
+              <div class="txn-name" style="font-size:15px">${esc(p.name)}</div>
+              <div class="txn-meta">${fmtDT(p.createdAt)} \u00b7 ${(p.positions||[]).length} Einzahlung(en)</div>
+              <div class="txn-meta">${p.ausgebucht
+                 ? '<b style="color:var(--ok)">\u2713 ausgebucht</b>'
+                 : '<b style="color:var(--o2-mag)">noch auszubuchen</b>'}</div>
+            </div>
+            <span class="status ${cls}"><span class="dot"></span>${lbl}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+            <button class="btn btn-mini" style="margin:0" onclick='showReceipt(${JSON.stringify(p).replace(/'/g,"&#39;")})'>Beleg ansehen</button>
+            <div class="txn-amt" style="font-size:18px">${euro(p.total)}</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  renderKassenbestand();
 }
 
 /* ===== Kassenbestand ===== */
@@ -1416,21 +1706,23 @@ function pendingCash(){
 }
 
 function renderKassenbestand(){
-  const startEl=document.getElementById('kb-start'); if(!startEl) return;
+  const startEl=document.getElementById('kb-start');
   const istEl=document.getElementById('kb-ist');
+  if(!startEl||!istEl) return;
   if(startEl.dataset.init!=='1'){
     startEl.dataset.init='1';
     startEl.addEventListener('change',saveStart);
-    istEl.addEventListener('change',()=>saveKasse({ist:istEl.value||''}));
   }
-  // Werte aus geteiltem State übernehmen (außer während des Tippens)
   if(document.activeElement!==startEl) startEl.value = kasse.start||'';
   if(document.activeElement!==istEl)   istEl.value   = kasse.ist||'';
 
-  const start=grundbestand();                          // Grundbestand/Wechselgeld
-  const erfasst=erfasstSum();                          // alle Einzahlungen ab Erfassung
+  const start=grundbestand();
+  const erfasst=erfasstSum();
   const mv=movesSum();
-  const soll=round2(start+erfasst+mv);
+  const bag=deckung();
+  const inBN=nichtAbtransportiert();
+  // Tasche enthält bereits die Bewegungen -> nicht nochmal addieren
+  const soll=round2(bag+ausgeglichenOffen());   // = Startbetrag + Einlagen - Entnahmen
   const erfCount=Object.values(payments).length;
   const mvCount=Object.keys(moves).length;
 
@@ -1440,88 +1732,133 @@ function renderKassenbestand(){
   document.getElementById('kb-moves-count').textContent=mvCount+(mvCount===1?' Bewegung':' Bewegungen');
   document.getElementById('kb-soll').textContent=euro(soll);
 
+  // Ist-Bestand der Tasche vs. berechneter Taschenstand
   const ist=istEl.value===''?null:round2(parseFloat(istEl.value)||0);
-  const diffEl=document.getElementById('kb-diff'), label=document.getElementById('kb-diff-label'), val=document.getElementById('kb-diff-val');
-
-  // Pending: Bargeld noch nicht physisch in SHA
-  const pend=pendingCash();
-  const pbox=document.getElementById('pending-box');
-  document.getElementById('pending-amt').textContent=euro(pend.total);
-  if(pend.total<0.005){
-    pbox.classList.add('zero');
-    document.getElementById('pending-title').textContent='Alles Bargeld ist in SHA';
-    document.getElementById('pending-sub').textContent='Ist-Bestand sollte mit dem Soll \u00fcbereinstimmen.';
-    document.getElementById('pending-detail').innerHTML='';
-  } else {
-    pbox.classList.remove('zero');
-    document.getElementById('pending-title').textContent='Noch nicht physisch in SHA';
-    document.getElementById('pending-sub').textContent='Dieses Bargeld z\u00e4hlt schon zum Soll, liegt aber noch in Backnang / ist unterwegs.';
-    document.getElementById('pending-detail').innerHTML=
-      `<span>In Backnang: <b>${euro(pend.bnSum)}</b> (${pend.bnCount})</span>`+
-      `<span>Unterwegs: <b>${euro(pend.trSum)}</b> (${pend.trCount})</span>`;
-  }
-
+  const diffEl=document.getElementById('kb-diff');
+  const label=document.getElementById('kb-diff-label');
+  const val=document.getElementById('kb-diff-val');
   if(ist===null){
-    diffEl.className='kb-diff ok'; label.textContent='Ist-Bestand eingeben f\u00fcr Abgleich'; val.textContent='\u2013';
+    diffEl.className='kb-diff ok';
+    label.textContent='Tasche z\u00e4hlen und eintragen f\u00fcr Abgleich';
+    val.textContent='\u2013';
   } else {
-    const d=round2(ist-soll);
+    const d=round2(ist-bag);
     const ok=Math.abs(d)<0.005;
-    // erwartete Lücke = pending (dieses Geld fehlt physisch noch)
-    const expectedGap=round2(-pend.total);
-    if(ok){
-      diffEl.className='kb-diff ok'; label.textContent='Kasse stimmt'; val.textContent='+'+euro(0);
-    } else if(Math.abs(d-expectedGap)<0.005 && pend.total>0){
-      // Fehlbetrag entspricht exakt dem noch nicht angekommenen Geld → alles korrekt
-      diffEl.className='kb-diff ok';
-      label.textContent='Passt \u2013 Fehlbetrag = noch nicht angekommenes Geld';
-      val.textContent=euro(d);
-    } else {
-      diffEl.className='kb-diff bad';
-      label.textContent=d>0?'\u00dcberschuss (pr\u00fcfen!)':'Fehlbetrag (pr\u00fcfen!)';
-      val.textContent=(d>0?'+':'')+euro(d);
-    }
-  }
-
-  // Wechselgeld-Deckung
-  const deckBox=document.getElementById('deck-box');
-  if(deckBox){
-    const dv=deckung();
-    document.getElementById('deck-amt').textContent=euro(dv);
-    if(dv<-0.005){
-      deckBox.classList.remove('zero');
-      document.getElementById('deck-title').textContent='Kasse im Minus!';
-      document.getElementById('deck-sub').textContent='Wechselgeld ersch\u00f6pft \u2013 Kasse dringend auff\u00fcllen.';
-    } else if(dv<20){
-      deckBox.classList.remove('zero');
-      document.getElementById('deck-title').textContent='Wechselgeld fast ersch\u00f6pft';
-      document.getElementById('deck-sub').textContent='Nur noch wenig Deckung f\u00fcr neue Einzahlungen.';
-    } else {
-      deckBox.classList.add('zero');
-      document.getElementById('deck-title').textContent='Wechselgeld-Deckung SHA';
-      document.getElementById('deck-sub').textContent='So viel k\u00f6nnen Kunden noch einzahlen, bevor Freigabe n\u00f6tig ist.';
-    }
+    diffEl.className='kb-diff '+(ok?'ok':'bad');
+    label.textContent = ok ? 'Tasche stimmt ('+euro(bag)+')'
+                           : (d>0?'\u00dcberschuss in der Tasche':'Fehlbetrag in der Tasche');
+    val.textContent=(d>0?'+':'')+euro(d);
   }
 
   // Bewegungsliste
   const ml=document.getElementById('kb-moves-list');
   const list=Object.values(moves).sort((a,b)=>b.at-a.at);
-  if(list.length){
-    ml.innerHTML='<div style="font-weight:700;font-size:13px;color:var(--grey);margin:14px 0 8px">Kassenbewegungen</div>'+list.map(m=>`
-      <div class="move-row"><div><div class="mk">${m.type==='einlage'?'Einlage':'Entnahme'} \u00b7 ${esc(m.note)}</div>
-      <div class="msub">${fmtDT(m.at)}</div></div>
-      <div style="display:flex;align-items:center;gap:6px">
-        <span class="mv ${m.type==='einlage'?'plus':'minus'}">${m.type==='einlage'?'+':'\u2212'}${euro(m.amount)}</span>
-        ${isAdmin?`<button class="move-del" onclick="deleteMove('${m.id}')" title="L\u00f6schen">&times;</button>`:''}
-      </div></div>`).join('');
-  } else ml.innerHTML='';
-
-  // Kasse-Stats oben
-  document.getElementById('k-soll').textContent=euro(soll);
-  document.getElementById('k-pending').textContent=euro(pend.total);
-  document.getElementById('k-diff').textContent = ist===null?'\u2013':((ist-soll>0?'+':'')+euro(ist-soll));
+  if(ml){
+    if(list.length){
+      ml.innerHTML='<div style="font-weight:700;font-size:13px;color:var(--grey);margin:14px 0 8px">Kassenbewegungen</div>'+list.map(m=>`
+        <div class="move-row"><div><div class="mk">${m.type==='einlage'?'Einlage':'Entnahme'} \u00b7 ${esc(m.note)}</div>
+        <div class="msub">${fmtDT(m.at)}</div></div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="mv ${m.type==='einlage'?'plus':'minus'}">${m.type==='einlage'?'+':'\u2212'}${euro(m.amount)}</span>
+          ${isAdmin?`<button class="move-del" onclick="deleteMove('${m.id}')" title="L\u00f6schen">&times;</button>`:''}
+        </div></div>`).join('');
+    } else ml.innerHTML='';
+  }
 }
 
 /* ===== BELEGE / ARCHIV ===== */
+const AUFBEWAHRUNG_TAGE = 32;
+
+/* Verlauf ein-/ausklappen */
+function toggleHistorie(){
+  const w=document.getElementById('historie-wrap');
+  const open = w.style.display!=='none';
+  w.style.display = open ? 'none' : 'block';
+  document.getElementById('hist-toggle-text').textContent = open ? 'Verlauf anzeigen' : 'Verlauf einklappen';
+}
+
+/* ---- CSV-Export (öffnet sich direkt in Excel) ---- */
+function csvEscape(v){
+  const s=String(v??'').replace(/"/g,'""');
+  return /[";\n]/.test(s) ? '"'+s+'"' : s;
+}
+function buildCSV(payList, moveList){
+  const rows=[];
+  rows.push(['Typ','Datum','Beleg-Nr','Name','Geburtsdatum','Rufnummer','Kassierer',
+             'Art','Kundennummer','Rechnungsbetrag','Gebuehr','Gesamt',
+             'Ausgebucht','Geldstatus','Notiz']);
+  payList.sort((a,b)=>a.createdAt-b.createdAt).forEach(p=>{
+    const statusTxt = p.status==='bn'?'in Backnang':p.status==='transit'?'unterwegs':'in SHA';
+    (p.positions||[]).forEach((x,i)=>{
+      rows.push([
+        'Einzahlung',
+        fmtDT(p.createdAt),
+        p.belegNr, p.name, fmtDate(p.dob), p.phone, p.agent||'',
+        x.type, x.kundennr||'',
+        (x.amount??0).toFixed(2).replace('.',','),
+        i===0 ? (p.fee??0).toFixed(2).replace('.',',') : '',
+        i===0 ? (p.total??0).toFixed(2).replace('.',',') : '',
+        i===0 ? (p.ausgebucht?'ja':'nein') : '',
+        i===0 ? statusTxt : '',
+        i===0 ? (p.bestandskunde==='nein'?'Kunde nicht im System':'') : ''
+      ]);
+    });
+  });
+  moveList.sort((a,b)=>a.at-b.at).forEach(m=>{
+    rows.push([
+      m.type==='einlage'?'Einlage':'Entnahme',
+      fmtDT(m.at), '','','','','','','','','',
+      (m.type==='einlage'? m.amount : -m.amount).toFixed(2).replace('.',','),
+      '','', m.note||''
+    ]);
+  });
+  // Semikolon-getrennt + BOM -> Excel (DE) öffnet es direkt korrekt
+  return '\ufeff'+rows.map(r=>r.map(csvEscape).join(';')).join('\r\n');
+}
+function downloadCSV(text, filename){
+  const blob=new Blob([text],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function exportCSV(){
+  const payList=Object.values(payments);
+  const moveList=Object.values(moves);
+  if(!payList.length && !moveList.length){ toast('Nichts zu exportieren',"bad"); return; }
+  const d=new Date();
+  const p2=n=>String(n).padStart(2,'0');
+  const name=`HeTec_Einzahlungen_${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}.csv`;
+  downloadCSV(buildCSV(payList,moveList), name);
+  toast('Export heruntergeladen',"ok");
+}
+
+/* ---- Automatisches Löschen nach 32 Tagen (mit CSV-Sicherung) ---- */
+function cleanupAlteDaten(){
+  const grenze = Date.now() - AUFBEWAHRUNG_TAGE*24*60*60*1000;
+  const altePay  = Object.values(payments).filter(p=>p.createdAt < grenze);
+  const alteMove = Object.values(moves).filter(m=>m.at < grenze);
+  if(!altePay.length && !alteMove.length) return;
+
+  // Vor dem Löschen automatisch sichern
+  try{
+    const d=new Date(); const p2=n=>String(n).padStart(2,'0');
+    downloadCSV(buildCSV(altePay,alteMove),
+      `HeTec_Archiv_geloescht_${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}.csv`);
+  }catch(e){ console.warn('Sicherung fehlgeschlagen',e); }
+
+  altePay.forEach(p=>{
+    if(useFirebase) db.ref('payments/'+p.id).remove(); else delete payments[p.id];
+  });
+  alteMove.forEach(m=>{
+    if(useFirebase) db.ref('moves/'+m.id).remove(); else delete moves[m.id];
+  });
+  if(!useFirebase){ persistLocal(); refreshAll(); }
+  toast(`${altePay.length+alteMove.length} Eintrag(e) \u00e4lter als ${AUFBEWAHRUNG_TAGE} Tage gel\u00f6scht \u2013 CSV-Sicherung heruntergeladen`,"ok");
+}
+
 let archivFilter='all';
 function setArchivFilter(f){
   archivFilter=f;
@@ -1541,6 +1878,17 @@ function renderBelege(){
   document.getElementById('a-count').textContent=all.length;
   document.getElementById('a-sum').textContent=euro(sumEin);
   document.getElementById('a-fees').textContent=euro(sumFee);
+
+  // Hinweis: was demnächst gelöscht wird
+  const note=document.getElementById('cleanup-note');
+  if(note){
+    const grenze=Date.now()-AUFBEWAHRUNG_TAGE*24*60*60*1000;
+    const warnGrenze=grenze+7*24*60*60*1000;   // in den nächsten 7 Tagen fällig
+    const bald=all.filter(p=>p.createdAt<warnGrenze).length;
+    note.textContent = bald
+      ? `${bald} Eintrag(e) werden in den n\u00e4chsten Tagen automatisch gel\u00f6scht`
+      : `Eintr\u00e4ge werden nach ${AUFBEWAHRUNG_TAGE} Tagen automatisch gel\u00f6scht`;
+  }
 
   // Einträge zusammenstellen: Belege + Kassenbewegungen
   let items=[];
@@ -1614,7 +1962,61 @@ function renderBelege(){
 }
 
 /* ===== Badges + Alerts + Stats übergreifend ===== */
+/* ===== Taschen-Anzeige im Header (für BEIDE Shops sichtbar) ===== */
+function updateHeaderBag(){
+  const box=document.getElementById('hdr-bag');
+  if(!box) return;
+  const start=grundbestand();
+  if(!start && !Object.keys(payments).length){ box.style.display='none'; return; }
+  box.style.display='block';
+
+  const bag=deckung();                     // was aktuell in der Tasche liegt
+  const offen=offeneBelege().filter(p=>p.status!=='sha');
+  const offenSum=round2(offen.reduce((s,p)=>s+p.total,0));
+  const frei=round2(bag-offenSum);          // was nach dem Ausbuchen übrig bleibt
+
+  const lbl=document.getElementById('hdr-bag-label');
+  const amt=document.getElementById('hdr-bag-amt');
+  const sub=document.getElementById('hdr-bag-sub');
+  box.classList.remove('low','empty');
+
+  if(ROLE==='backnang'){
+    /* Backnang interessiert nur: wie viel kann der nächste Kunde noch einzahlen?
+       Das ist der Betrag NACH Abzug der noch nicht ausgebuchten Belege. */
+    lbl.innerHTML='&#128176; Noch einzahlbar';
+    amt.textContent=euro(frei);
+    if(frei < -0.005){
+      box.classList.add('empty');
+      sub.textContent='Kasse im Minus \u2013 Geld nach SHA bringen!';
+    } else if(frei < 0.005){
+      box.classList.add('empty');
+      sub.textContent='Keine Einzahlung mehr m\u00f6glich!';
+    } else if(frei < 50){
+      box.classList.add('low');
+      sub.textContent='fast aufgebraucht';
+    } else {
+      sub.textContent='Tasche SHA: '+euro(bag);
+    }
+  } else {
+    /* SHA sieht den echten Taschenstand */
+    lbl.innerHTML='&#128188; Schwarze Tasche';
+    amt.textContent=euro(bag);
+    if(bag < -0.005){
+      box.classList.add('empty'); sub.textContent='Tasche im Minus!';
+    } else if(offenSum > 0.005){
+      if(frei < -0.005){ box.classList.add('empty'); sub.textContent='reicht nicht f\u00fcr offene Belege!'; }
+      else if(frei < 50){ box.classList.add('low'); sub.textContent='nach Ausbuchen: '+euro(frei); }
+      else { sub.textContent='nach Ausbuchen: '+euro(frei); }
+    } else if(bag < 50){
+      box.classList.add('low'); sub.textContent='fast leer \u2013 Transfer n\u00f6tig';
+    } else {
+      sub.textContent='verf\u00fcgbar';
+    }
+  }
+}
+
 function refreshAll(){
+  updateHeaderBag();
   const openSum=bnOpenSum(), openCount=bnOpen().length;
   const transit=Object.values(payments).filter(p=>p.status==='transit');
   const transitSum=round2(transit.reduce((s,p)=>s+p.total,0));
@@ -1632,21 +2034,12 @@ function refreshAll(){
     document.getElementById('alert-bn-text').textContent=openCount===1?'1 Beleg wartet in Backnang':openCount+' Belege warten in Backnang';
     document.getElementById('alert-bn-sub').textContent=euro(openSum)+' bar \u2013 bereit zum Transfer nach SHA';
   } else ab.classList.remove('show');
-
-  // Alert Kasse (Geld unterwegs)
-  const ai=document.getElementById('alert-incoming');
-  if(transit.length>0){ ai.classList.add('show');
-    document.getElementById('alert-incoming-text').textContent=euro(transitSum)+' unterwegs zur SHA';
-    document.getElementById('alert-incoming-sub').textContent=transit.length+' Beleg(e) \u2013 bei Ankunft &bdquo;Geld eingegangen&ldquo; best\u00e4tigen';
-  } else ai.classList.remove('show');
-
   if(currentTab==='transfer') renderTransfer();
-  if(currentTab==='kasse') renderKassenbestand();
+  if(currentTab==='kasse') renderKasse();
   if(currentTab==='belege') renderBelege();
 
   handleFreigaben();
 }
-function scrollToIncoming(){ setFilter('transit'); document.getElementById('kasse-list').scrollIntoView({behavior:'smooth'}); }
 
 /* ===== FREIGABEN verarbeiten (beide Seiten) ===== */
 function handleFreigaben(){
@@ -1667,8 +2060,8 @@ function handleFreigaben(){
             </div>
             <div class="freigabe-amt">${euro(f.amount)}</div>
           </div>
-          <div class="freigabe-sub">Aktuelle Deckung: <b>${euro(f.deckung)}</b> \u00b7 Fehlbetrag: <b style="color:var(--o2-mag)">${euro(f.fehlbetrag)}</b></div>
-          <div class="deck-note deck-bad">Bei Freigabe geht die SHA-Kasse ins Minus. Geld muss schnellstm\u00f6glich transportiert werden.</div>
+          <div class="freigabe-sub">Aktuell in der Tasche: <b>${euro(f.deckung)}</b> \u00b7 Fehlbetrag: <b style="color:var(--o2-mag)">${euro(f.fehlbetrag)}</b></div>
+          <div class="deck-note deck-bad">Bei Freigabe geht die Tasche ins Minus. Geld muss schnellstm\u00f6glich aus Backnang gebracht werden.</div>
           <div class="freigabe-actions">
             <button class="btn btn-approve" onclick="approveFreigabe('${f.id}')">&#10003; Freigeben</button>
             <button class="btn btn-reject" onclick="rejectFreigabe('${f.id}')">Ablehnen</button>
