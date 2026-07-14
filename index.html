@@ -236,6 +236,12 @@
   .kb-diff .d{font-size:22px;font-weight:800}
   .kb-note{font-size:12px;color:var(--grey);margin-top:8px}
   .moves-list{margin-top:12px}
+  .kredit-box{border:2px solid var(--o2-mag);background:#fff5fb;border-radius:14px;padding:14px 16px;margin-bottom:16px}
+  .kredit-head{display:flex;align-items:center;gap:12px}
+  .kredit-head .kico{font-size:26px;line-height:1}
+  .kredit-title{font-weight:800;font-size:14.5px;color:var(--o2-mag)}
+  .kredit-sub{font-size:12px;color:var(--grey)}
+  .kredit-amt{margin-left:auto;font-size:24px;font-weight:800;color:var(--o2-mag);white-space:nowrap}
   .export-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
   .export-note{font-size:12px;color:var(--grey);margin-left:auto}
 
@@ -617,6 +623,17 @@
     <div class="check-row" id="check-row">
       <span id="check-text">Kontrolle: Tasche + Backnang = Ausgangsbetrag</span>
       <b id="check-val">0,00 &euro;</b>
+    </div>
+
+    <div class="kredit-box" id="kredit-box" style="display:none">
+      <div class="kredit-head">
+        <span class="kico">&#129297;</span>
+        <div>
+          <div class="kredit-title">Schw&auml;bisch Hall hat vorgestreckt</div>
+          <div class="kredit-sub" id="kredit-sub">Dieses Geld bekommst du beim n&auml;chsten Geldeingang aus Backnang zur&uuml;ck.</div>
+        </div>
+        <div class="kredit-amt" id="kredit-amt">0,00 &euro;</div>
+      </div>
     </div>
 
     <!-- Belege ausbuchen (Hauptaufgabe SHA) -->
@@ -1113,18 +1130,53 @@ function nichtAbtransportiert(){
    = Startbetrag - (ausgebuchte Belege, deren Geld noch nicht da ist) + Einlagen - Entnahmen */
 function deckung(){ return round2(grundbestand()-ausgeglichenOffen()+movesSum()); }
 
+/* ===== KREDIT VON SCHWÄBISCH HALL =====
+   Wenn beim Ausbuchen mehr Geld nötig ist als in der Tasche liegt, legt SHA
+   eigenes Geld dazu. Der Kredit ergibt sich IMMER rechnerisch aus dem Stand:
+   Sobald die Tasche rechnerisch negativ wäre, ist genau dieser Fehlbetrag
+   der Kredit. Dadurch stimmt es auch bei Altdaten automatisch. */
+function kreditSHA(){
+  const rein = deckung();                  // rechnerischer Stand ohne Vorschuss
+  const manuell = round2(parseFloat(kasse.kredit)||0);
+  const auto = rein < -0.005 ? round2(-rein) : 0;
+  return Math.max(auto, manuell);
+}
+function setKredit(v){ saveKasse({kredit: String(round2(v))}); }
+/* Was PHYSISCH in der Tasche liegt: nie negativ, weil SHA auffüllt */
+function tascheStand(){ return round2(deckung()+kreditSHA()); }
+
 /* SHA bucht einen Beleg aus: in der o2-Kasse einzahlen, Geld aus der Tasche nehmen */
 function ausbuchen(id){
   const p=payments[id]; if(!p) return;
   if(p.ausgebucht) return;
-  const bag=deckung();
-  if(round2(bag-p.total) < -0.005){
-    if(!confirm(`Achtung: In der Tasche sind nur ${euro(bag)}.\nDieser Beleg über ${euro(p.total)} bringt die Tasche ins Minus.\n\nTrotzdem ausbuchen?`)) return;
+  const bag=deckung();               // was ohne SHA-Kredit noch da wäre
+  const rest=round2(bag-p.total);    // Stand nach dem Ausbuchen
+  let neuerKredit=0;
+
+  if(rest < -0.005){
+    // Tasche reicht nicht -> SHA muss eigenes Geld dazulegen
+    neuerKredit=round2(-rest);
+    const zusaetzlich=round2(neuerKredit-kreditSHA());
+    if(!confirm(
+      `In der Tasche sind nur ${euro(bag)}.\n`+
+      `Beleg: ${euro(p.total)}\n\n`+
+      `Schwäbisch Hall muss ${euro(zusaetzlich>0?zusaetzlich:0)} aus der EIGENEN Kasse dazulegen.\n`+
+      `Offener Kredit danach: ${euro(neuerKredit)}\n\n`+
+      `(Das Geld bekommst du beim nächsten Geldeingang aus Backnang zurück.)\n\n`+
+      `Jetzt ausbuchen?`)) return;
   }
+
   const upd={ausgebucht:true, ausgebuchtAt:Date.now()};
   if(useFirebase) db.ref('payments/'+id).update(upd);
-  else{ Object.assign(payments[id],upd); persistLocal(); refreshAll(); }
-  toast('Beleg ausgebucht \u2013 '+euro(p.total)+' aus der Tasche entnommen',"ok");
+  else{ Object.assign(payments[id],upd); persistLocal(); }
+
+  if(neuerKredit>0.005) setKredit(neuerKredit);
+  else if(!useFirebase){ refreshAll(); }
+
+  if(neuerKredit>0.005)
+    toast('Beleg ausgebucht \u2013 SHA hat '+euro(neuerKredit)+' vorgestreckt',"bad");
+  else
+    toast('Beleg ausgebucht \u2013 '+euro(p.total)+' aus der Tasche entnommen',"ok");
 }
 /* Rückgängig machen (Admin) */
 function ausbuchenRueckgaengig(id){
@@ -1249,7 +1301,21 @@ function confirmIncoming(adminOverride){
   ps.forEach(p=>{ upd[p.id]={...p,status:'sha',arrivedAt:now}; });
   applyPaymentUpdates(upd);
   closeModal('incoming-modal');
-  toast('Geld eingegangen \u2013 in SHA-Kasse verbucht',"ok");
+
+  // Hat SHA Geld vorgestreckt? -> Jetzt zurücknehmen
+  const kredit=kreditSHA();
+  if(kredit>0.005){
+    alert(
+      `Geld eingegangen: ${euro(counted)}\n\n`+
+      `Schwäbisch Hall hatte ${euro(kredit)} vorgestreckt.\n\n`+
+      `\u2192 Bitte jetzt ${euro(kredit)} aus der schwarzen Tasche nehmen\n`+
+      `   und zurück in die EIGENE Kasse legen.\n\n`+
+      `Danach liegen wieder ${euro(grundbestand())} in der Tasche.`);
+    setKredit(0);
+    toast('Geld eingegangen \u2013 '+euro(kredit)+' Kredit an SHA zur\u00fcck',"ok");
+  } else {
+    toast('Geld eingegangen \u2013 zur\u00fcck in der Tasche',"ok");
+  }
   renderKasse();
 }
 function applyPaymentUpdates(upd){
@@ -1533,9 +1599,22 @@ function renderKasse(){
   const sc=document.getElementById('start-card');
   if(sc) sc.style.display = startSet ? 'none' : 'block';
 
-  const bag   = deckung();                 // Tasche = Startbetrag - was in Backnang/unterwegs liegt
+  const bag   = tascheStand();             // was PHYSISCH in der Tasche liegt (inkl. SHA-Vorschuss)
+  const rein  = deckung();                 // ohne SHA-Vorschuss (kann negativ sein)
+  const kred  = kreditSHA();               // was SHA vorgestreckt hat
   const inBN  = nichtAbtransportiert();    // Bargeld, das noch nach SHA muss
   const start = grundbestand();
+
+  // Kredit-Kachel
+  const kb=document.getElementById('kredit-box');
+  if(kb){
+    if(kred>0.005){
+      kb.style.display='block';
+      document.getElementById('kredit-amt').textContent=euro(kred);
+      document.getElementById('kredit-sub').textContent=
+        'Beim n\u00e4chsten Geldeingang aus Backnang '+euro(kred)+' wieder aus der Tasche nehmen und in die eigene Kasse legen.';
+    } else kb.style.display='none';
+  }
 
   // Kachel: Tasche
   const bagCard=document.getElementById('bag-card');
@@ -1543,7 +1622,10 @@ function renderKasse(){
     document.getElementById('bag-amt').textContent=euro(bag);
     bagCard.classList.remove('low','empty');
     const sub=document.getElementById('bag-sub');
-    if(bag < -0.005){
+    if(kred > 0.005){
+      bagCard.classList.add('low');
+      sub.textContent='davon '+euro(kred)+' von SHA vorgestreckt';
+    } else if(bag < -0.005){
       bagCard.classList.add('empty');
       sub.textContent='Tasche im Minus \u2013 Geld muss dringend aus Backnang kommen!';
     } else if(bag < 50 && startSet){
@@ -1580,7 +1662,7 @@ function renderKasse(){
   if(cr){
     const entnommen=ausgeglichenOffen();
     const mvs=movesSum();
-    const summe=round2(bag+entnommen);
+    const summe=round2(bag-kred+entnommen);   // physisch minus Vorschuss
     const ziel=round2(start+mvs);
     document.getElementById('check-val').textContent=euro(summe);
     const ok=Math.abs(summe-ziel)<0.005;
@@ -1970,10 +2052,12 @@ function updateHeaderBag(){
   if(!start && !Object.keys(payments).length){ box.style.display='none'; return; }
   box.style.display='block';
 
-  const bag=deckung();                     // was aktuell in der Tasche liegt
+  const bag=tascheStand();                  // was PHYSISCH in der Tasche liegt (nie negativ)
+  const rein=deckung();                     // rechnerisch, ohne SHA-Vorschuss
+  const kred=kreditSHA();                   // was SHA vorgestreckt hat
   const offen=offeneBelege().filter(p=>p.status!=='sha');
   const offenSum=round2(offen.reduce((s,p)=>s+p.total,0));
-  const frei=round2(bag-offenSum);          // was nach dem Ausbuchen übrig bleibt
+  const frei=round2(rein-offenSum);         // was nach dem Ausbuchen übrig bleibt
 
   const lbl=document.getElementById('hdr-bag-label');
   const amt=document.getElementById('hdr-bag-amt');
@@ -2001,8 +2085,9 @@ function updateHeaderBag(){
     /* SHA sieht den echten Taschenstand */
     lbl.innerHTML='&#128188; Schwarze Tasche';
     amt.textContent=euro(bag);
-    if(bag < -0.005){
-      box.classList.add('empty'); sub.textContent='Tasche im Minus!';
+    if(kred > 0.005){
+      box.classList.add('empty');
+      sub.textContent='SHA hat '+euro(kred)+' vorgestreckt';
     } else if(offenSum > 0.005){
       if(frei < -0.005){ box.classList.add('empty'); sub.textContent='reicht nicht f\u00fcr offene Belege!'; }
       else if(frei < 50){ box.classList.add('low'); sub.textContent='nach Ausbuchen: '+euro(frei); }
