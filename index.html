@@ -6,6 +6,7 @@
 <title>o2 Rechnung einzahlen &ndash; HeTec</title>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   :root{
@@ -350,6 +351,20 @@
 </style>
 </head>
 <body>
+
+<div class="role-screen no-print" id="login-screen" style="display:none">
+  <div class="role-card">
+    <h1>&#128274; HeTec Kasse</h1>
+    <p>Bitte Shop-Passwort eingeben, um fortzufahren.</p>
+    <div class="field" style="text-align:left">
+      <input id="login-pw" type="password" placeholder="Shop-Passwort" autocomplete="current-password"
+             onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="err" id="login-err" style="text-align:left">Falsches Passwort.</div>
+    <button class="btn btn-primary" id="login-btn" onclick="doLogin()">Anmelden</button>
+    <div class="hint" id="login-hint" style="text-align:center">&nbsp;</div>
+  </div>
+</div>
 
 <div class="role-screen no-print" id="role-screen" style="display:none">
   <div class="role-card">
@@ -713,14 +728,18 @@ const firebaseConfig = {
   messagingSenderId: "966403707184",
   appId: "1:966403707184:web:236d3d7618c820efe438f5"
 };
-let db=null, useFirebase=false;
+let db=null, auth=null, useFirebase=false;
 try{
   if(!firebaseConfig.databaseURL.includes("DEIN_PROJEKT")){
-    firebase.initializeApp(firebaseConfig); db=firebase.database(); useFirebase=true;
+    firebase.initializeApp(firebaseConfig);
+    db=firebase.database();
+    auth=firebase.auth();
+    useFirebase=true;
   }
 }catch(e){ console.warn("Firebase init failed, Demo-Modus",e); }
 
 /* ===== KONFIG ===== */
+const SHOP_PW  = "hetec-shop";  // <-- Shop-Passwort für alle Mitarbeiter (hier ändern)
 const ADMIN_PW = "hetec2026";   // <-- Admin-Passwort hier ändern
 const FEE = 3.00;   // Bearbeitungsgebühr PRO Einzahlung (3 Einzahlungen = 9 €)
 const MAX_POS = 10;
@@ -1695,24 +1714,76 @@ function rejectFreigabe(id){
   toast('Einzahlung abgelehnt');
 }
 
+/* ===== LOGIN (Shop-Passwort + Firebase Anonymous Auth) ===== */
+function doLogin(){
+  const pw=document.getElementById('login-pw').value;
+  const err=document.getElementById('login-err');
+  const btn=document.getElementById('login-btn');
+  const hint=document.getElementById('login-hint');
+  if(pw!==SHOP_PW){
+    err.textContent='Falsches Passwort.'; err.style.display='block';
+    document.getElementById('login-pw').value='';
+    return;
+  }
+  err.style.display='none';
+  btn.disabled=true; btn.textContent='Anmelden\u2026';
+  hint.textContent='Verbinde mit der Datenbank\u2026';
+
+  if(!useFirebase){
+    // Demo-Modus ohne Firebase
+    sessionStorage.setItem('hetec_auth','1');
+    startApp();
+    return;
+  }
+  auth.signInAnonymously()
+    .then(()=>{
+      sessionStorage.setItem('hetec_auth','1');
+      startApp();
+    })
+    .catch(e=>{
+      console.error(e);
+      btn.disabled=false; btn.textContent='Anmelden';
+      hint.textContent='';
+      err.innerHTML='Anmeldung fehlgeschlagen.<br>Ist in Firebase &bdquo;Anonym&ldquo; als Anmeldemethode aktiviert?';
+      err.style.display='block';
+    });
+}
+
+function startApp(){
+  document.getElementById('login-screen').style.display='none';
+  if(useFirebase){
+    db.ref('payments').on('value',s=>{ payments=s.val()||{}; refreshAll(); if(currentTab==='kasse') renderKasse(); });
+    db.ref('moves').on('value',s=>{ moves=s.val()||{}; refreshAll(); });
+    db.ref('freigaben').on('value',s=>{ freigaben=s.val()||{}; refreshAll(); });
+    db.ref('kasse').on('value',s=>{ kasse=s.val()||{start:'',ist:''}; refreshAll(); if(currentTab==='kasse') renderKassenbestand(); });
+  }else{
+    payments=JSON.parse(localStorage.getItem('hetec_payments')||'{}');
+    moves=JSON.parse(localStorage.getItem('hetec_moves')||'{}');
+    freigaben=JSON.parse(localStorage.getItem('hetec_freigaben')||'{}');
+    kasse=JSON.parse(localStorage.getItem('hetec_kasse')||'{"start":"","ist":""}');
+    refreshAll();
+  }
+  applyRole();
+}
+
 /* ===== INIT ===== */
 positions=[{type:"Handyvertrag",kundennr:"",amount:""}]; renderPositions();
 applyAdminUI();
 // Rolle bestimmen: URL-Parameter > gespeichert > Auswahlseite
 ROLE = getRoleFromURL() || localStorage.getItem('hetec_role') || null;
-if(useFirebase){
-  db.ref('payments').on('value',s=>{ payments=s.val()||{}; refreshAll(); if(currentTab==='kasse') renderKasse(); });
-  db.ref('moves').on('value',s=>{ moves=s.val()||{}; refreshAll(); });
-  db.ref('freigaben').on('value',s=>{ freigaben=s.val()||{}; refreshAll(); });
-  db.ref('kasse').on('value',s=>{ kasse=s.val()||{start:'',ist:''}; refreshAll(); if(currentTab==='kasse') renderKassenbestand(); });
-}else{
-  payments=JSON.parse(localStorage.getItem('hetec_payments')||'{}');
-  moves=JSON.parse(localStorage.getItem('hetec_moves')||'{}');
-  freigaben=JSON.parse(localStorage.getItem('hetec_freigaben')||'{}');
-  kasse=JSON.parse(localStorage.getItem('hetec_kasse')||'{"start":"","ist":""}');
-  refreshAll();
+
+// Bereits in dieser Sitzung angemeldet? (z. B. Seite neu geladen)
+if(sessionStorage.getItem('hetec_auth')==='1'){
+  if(useFirebase){
+    auth.signInAnonymously().then(startApp).catch(()=>{
+      sessionStorage.removeItem('hetec_auth');
+      document.getElementById('login-screen').style.display='flex';
+    });
+  } else startApp();
+} else {
+  document.getElementById('login-screen').style.display='flex';
 }
-applyRole();
+
 </script>
 </body>
 </html>
